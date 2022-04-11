@@ -14,7 +14,7 @@ class Token:
 
 
 class Sentence:
-    def __init__(self, tokens, parent, size, gender):
+    def __init__(self, tokens, parent, size, gender='unknown'):
         self.tokens = tokens
         self.parent = parent
         self.size = size
@@ -24,6 +24,7 @@ class Sentence:
 class Corpus:
     def __init__(self):
         self.sentences = []
+        self.chunks = []
 
     def add_xml_file_to_corpus(self, file_name: str):
         """
@@ -51,6 +52,8 @@ class Corpus:
         for p in ps:
             p_sent += p.find_all('s')
 
+        last_chunk = []
+
         for sent in head_sent:
             words = sent.find_all('w')
             tokens = []
@@ -61,6 +64,12 @@ class Corpus:
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'head', len(tokens)))  # adding a new sentence each loop
 
+            last_chunk.append(Sentence(tokens, 'head', len(tokens)))
+
+            if len(last_chunk) == 10:   # adding chunks to the corpus
+                self.chunks.append(last_chunk)
+                last_chunk = []
+
         for sent in p_sent:
             words = sent.find_all('w')
             tokens = []
@@ -69,6 +78,12 @@ class Corpus:
                 tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'p', len(tokens)))
+
+            last_chunk.append(Sentence(tokens, 'head', len(tokens)))
+
+            if len(last_chunk) == 10:
+                self.chunks.append(last_chunk)
+                last_chunk = []
 
     def add_text_file_to_corpus(self, file_name: str):
         """
@@ -116,15 +131,10 @@ class Corpus:
             f.write(text_)
 
 
-# Implement a "Classify" class, that will be built using a corpus of type "Corpus" (thus, you will need to
-# connect it in any way you want to the "Corpus" class). Make sure that the class contains the relevant fields for
-# classification, and the methods in order to complete the tasks:
-
-
 class Classify:
 
-    def __init__(self):
-        return
+    def __init__(self, corpus):
+        self.corpus = corpus
 
 
 if __name__ == '__main__':
@@ -134,12 +144,12 @@ if __name__ == '__main__':
 
     xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
 
-    c = Corpus()
+    corp = Corpus()
 
     for file in xml_files:
-        c.add_xml_file_to_corpus(file)      # adding all xml files to the corpus
+        corp.add_xml_file_to_corpus(file)      # adding all xml files to the corpus
 
-
+    classify = Classify(corpus=corp)
 
     # Implement here your program:
     # 1. Create a corpus from the file in the given directory (up to 1000 XML files from the BNC)
