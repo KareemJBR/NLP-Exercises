@@ -1,0 +1,78 @@
+*** Sentence Predictions ***
+
+Unigrams Model:
+
+May the Force be with you.
+Probability: -38.64069919575265
+
+I’m going to make him an offer he can’t refuse.
+Probability: -84.30440861745016
+
+Ogres are like onions.
+Probability: -36.267699712912986
+
+You’re tearing me apart, Lisa!
+Probability: -62.244213313654306
+
+I live my life one quarter at a time.
+Probability: -59.59069514133656
+
+Bigrams Model:
+
+May the Force be with you.
+Probability: -83.25931382024007
+
+I’m going to make him an offer he can’t refuse.
+Probability: -135.82255486087197
+
+Ogres are like onions.
+Probability: -67.83296969277336
+
+You’re tearing me apart, Lisa!
+Probability: -84.96743003681523
+
+I live my life one quarter at a time.
+Probability: -109.8017684430638
+
+Trigrams Model:
+
+May the Force be with you.
+Probability: -16.34790128160652
+
+I’m going to make him an offer he can’t refuse.
+Probability: -15.876372736450552
+
+Ogres are like onions.
+Probability: -17.264267272625947
+
+You’re tearing me apart, Lisa!
+Probability: -4.748497100459473
+
+I live my life one quarter at a time.
+Probability: -20.716014904597827
+
+*** Random Sentence Generation ***
+
+Unigrams Model:
+
+conversely she does war employers Mark We as feelings appointment hand 118 the & respected local.
+schedule I second.
+three-dimensional why as suffering POINTS pub was was they better Development NIXDORF.
+Drachenfels perception demands had document and them that Casey blood a California you Skinner Victor greater to DG meet him display studies BUY with the aggressively this AT&T.
+of university Danish the go Soviet Intel It.
+
+Bigrams Model:
+
+I did and it will interoperate with a Parsytec live.
+A area of rotted wooden arch.
+It is no money on the guns in complex set out in which the Iris.
+Cut ¼ inch off.
+They do make it does n't sure to achieve a midnight by.
+
+Trigrams Model:
+
+A fichu of the police.
+The Dutch were still in its healthy clean-living image and a visual representation.
+If a child 's imaginative play as a major amphibious assault on Snow which made the job will entail.
+Since then two related developments have been affected in some watered down.
+Williams para 12.10.
