@@ -28,10 +28,23 @@ class Corpus:
         self.chunks = []
 
     @staticmethod
-    def get_gender_by_chunk(chunk):
-        chunk_str = "".join(chunk)
+    def chunk_to_str(ch):
+        res = ""
+        for _sen in ch:
+            for i in range(len(_sen.tokens)):
+                res += _sen.tokens[i].word
+                if i == len(_sen.tokens) - 1:
+                    res += '.\n'
+                else:
+                    res += ' '
+
+        return res
+
+    @staticmethod
+    def get_gender_by_chunk(curr_chunk):
+        chunk_string = Corpus.chunk_to_str(curr_chunk)
         gen_detector = gen.Detector()
-        return gen_detector.get_gender(chunk_str)
+        return gen_detector.get_gender(chunk_string)
 
     def add_xml_file_to_corpus(self, file_name: str):
         """
@@ -85,8 +98,8 @@ class Corpus:
             if len(last_chunk) == 10:
                 writer_gender = Corpus.get_gender_by_chunk(last_chunk)  # getting the writer's gender based on the chunk
 
-                for sen in last_chunk:  # updating Sentence objects in the chunk with the writer's predicted gender
-                    sen.gender = writer_gender
+                for sentence in last_chunk:  # updating Sentence objects in the chunk with the writer's predicted gender
+                    sentence.gender = writer_gender
 
                 self.chunks.append(last_chunk)
                 last_chunk = []
@@ -154,11 +167,21 @@ if __name__ == '__main__':
 
     for file in xml_files:
         corp.add_xml_file_to_corpus(file)      # adding all xml files to the corpus
+    # TODO: try adding xml_files using threads
 
     classify = Classify(corpus=corp)
 
-    # Implement here your program:
-    # 1. Create a corpus from the file in the given directory (up to 1000 XML files from the BNC) - DONE
-    # 2. Create a classification object based on the class implemented above.   - DONE
-    # 3. Classify the chunks of text from the corpus as described in the instructions.  - DONE
+    output_text = ""
+
+    for chunk in classify.corpus.chunks:
+        chunk_str = Corpus.chunk_to_str(chunk)
+
+        output_text += chunk_str
+        output_text += "Writer's predicted gender: "
+        output_text += chunk[0].gender
+        output_text += '\n\n'
+
+    with open(output_text, 'w', encoding='utf-8') as jabber:
+        jabber.write(output_text)
+
     # 4. Print onto the output file the results from the second task in the wanted format.
