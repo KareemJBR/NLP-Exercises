@@ -2,6 +2,7 @@
 from sys import argv
 from bs4 import BeautifulSoup  # will use it in order to parse xml files
 import glob  # will use it in order to get the names of files
+import gender_guesser.detector as gen
 
 
 class Token:
@@ -25,6 +26,12 @@ class Corpus:
     def __init__(self):
         self.sentences = []
         self.chunks = []
+
+    @staticmethod
+    def get_gender_by_chunk(chunk):
+        chunk_str = "".join(chunk)
+        gen_detector = gen.Detector()
+        return gen_detector.get_gender(chunk_str)
 
     def add_xml_file_to_corpus(self, file_name: str):
         """
@@ -52,8 +59,6 @@ class Corpus:
         for p in ps:
             p_sent += p.find_all('s')
 
-        last_chunk = []
-
         for sent in head_sent:
             words = sent.find_all('w')
             tokens = []
@@ -64,11 +69,7 @@ class Corpus:
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'head', len(tokens)))  # adding a new sentence each loop
 
-            last_chunk.append(Sentence(tokens, 'head', len(tokens)))
-
-            if len(last_chunk) == 10:   # adding chunks to the corpus
-                self.chunks.append(last_chunk)
-                last_chunk = []
+        last_chunk = []     # we consider chunks from paragraphs only
 
         for sent in p_sent:
             words = sent.find_all('w')
@@ -82,6 +83,11 @@ class Corpus:
             last_chunk.append(Sentence(tokens, 'head', len(tokens)))
 
             if len(last_chunk) == 10:
+                writer_gender = Corpus.get_gender_by_chunk(last_chunk)  # getting the writer's gender based on the chunk
+
+                for sen in last_chunk:  # updating Sentence objects in the chunk with the writer's predicted gender
+                    sen.gender = writer_gender
+
                 self.chunks.append(last_chunk)
                 last_chunk = []
 
@@ -152,7 +158,7 @@ if __name__ == '__main__':
     classify = Classify(corpus=corp)
 
     # Implement here your program:
-    # 1. Create a corpus from the file in the given directory (up to 1000 XML files from the BNC)
-    # 2. Create a classification object based on the class implemented above.
-    # 3. Classify the chunks of text from the corpus as described in the instructions.
+    # 1. Create a corpus from the file in the given directory (up to 1000 XML files from the BNC) - DONE
+    # 2. Create a classification object based on the class implemented above.   - DONE
+    # 3. Classify the chunks of text from the corpus as described in the instructions.  - DONE
     # 4. Print onto the output file the results from the second task in the wanted format.
