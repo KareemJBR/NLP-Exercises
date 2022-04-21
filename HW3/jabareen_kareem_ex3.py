@@ -1,4 +1,5 @@
 # student id: 211406343
+import random
 from sys import argv
 from bs4 import BeautifulSoup  # will use it in order to parse xml files
 import glob  # will use it in order to get the names of files
@@ -60,9 +61,17 @@ class Corpus:
         # we shall parse the xml file right now
 
         wtext = BeautifulSoup(data, "xml").find("wtext")
+        has_author_name = True
 
-        heads = wtext.find_all('head')
-        ps = wtext.find_all('p')
+        if wtext is None:       # the file is stext which has no author name
+            has_author_name = False
+            stext = BeautifulSoup(data, "xml").find("stext")
+            heads = stext.find_all('head')
+            ps = stext.find_all('p')
+
+        else:
+            heads = wtext.find_all('head')
+            ps = wtext.find_all('p')
 
         head_sent = []
         for h in heads:
@@ -93,16 +102,19 @@ class Corpus:
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'p', len(tokens)))
 
-            last_chunk.append(Sentence(tokens, 'head', len(tokens)))
+            if has_author_name:
+                last_chunk.append(Sentence(tokens, 'head', len(tokens)))
 
-            if len(last_chunk) == 10:
-                writer_gender = Corpus.get_gender_by_chunk(last_chunk)  # getting the writer's gender based on the chunk
+                if len(last_chunk) == 10:
+                    writer_gender = Corpus.get_gender_by_chunk(last_chunk)
+                    # getting the writer's gender based on the chunk
 
-                for sentence in last_chunk:  # updating Sentence objects in the chunk with the writer's predicted gender
-                    sentence.gender = writer_gender
+                    for sentence in last_chunk:
+                        # updating Sentence objects in the chunk with the writer's predicted gender
+                        sentence.gender = writer_gender
 
-                self.chunks.append(last_chunk)
-                last_chunk = []
+                    self.chunks.append(last_chunk)
+                    last_chunk = []
 
     def add_text_file_to_corpus(self, file_name: str):
         """
@@ -155,6 +167,29 @@ class Classify:
     def __init__(self, corpus):
         self.corpus = corpus
 
+    def down_sample(self):
+        male_chunks = [x for x in self.corpus.chunks if x[0].get_gender() == 'male']
+        female_chunks = [x for x in self.corpus.chunks if x[0].get_gender() == 'female']
+
+        if len(male_chunks) == len(female_chunks):
+            return
+
+        chunks_to_drop = abs(len(male_chunks) - len(female_chunks))
+
+        if len(male_chunks) > len(female_chunks):
+            male_chunks.remove(v for v in random.sample(male_chunks, chunks_to_drop))
+        else:
+            female_chunks.remove(v for v in random.sample(female_chunks, chunks_to_drop))
+
+        male_chunks.extend(female_chunks)
+        self.corpus.chunks = [].extend(male_chunks)
+
+    def get_counters(self):
+        male_counter = len([x for x in self.corpus.chunks if x[0].get_gender() == 'male'])
+        female_counter = len([x for x in self.corpus.chunks if x[0].get_gender() == 'female'])
+
+        return female_counter, male_counter
+
 
 if __name__ == '__main__':
 
@@ -167,19 +202,26 @@ if __name__ == '__main__':
 
     for file in xml_files:
         corp.add_xml_file_to_corpus(file)      # adding all xml files to the corpus
-    # TODO: try adding xml_files using threads
 
     classify = Classify(corpus=corp)
 
     output_text = ""
 
-    for chunk in classify.corpus.chunks:
-        chunk_str = Corpus.chunk_to_str(chunk)
+    f_chunks_counter, m_chunks_counter = classify.get_counters()
 
-        output_text += chunk_str
-        output_text += "Writer's predicted gender: "
-        output_text += chunk[0].gender
-        output_text += '\n\n'
+    output_text += "Before Down-Sampling:\n"
+    output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
+
+    classify.down_sample()
+    f_chunks_counter, m_chunks_counter = classify.get_counters()
+
+    output_text += "After Down-Sampling:\n"
+    output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
+
+    output_text += "== BoW Classification ==\n"
+    output_text += "Cross Validation Accuracy: "    # TODO: add accuracy
+
+    # TODO: add Custom Feature Vector Classification results
 
     with open(output_text, 'w', encoding='utf-8') as jabber:
         jabber.write(output_text)
