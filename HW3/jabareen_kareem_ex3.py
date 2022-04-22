@@ -149,6 +149,7 @@ class Classify:
 
     def __init__(self, corpus):
         self.corpus = corpus
+        self.chunk_bows = []
 
     def down_sample(self):
         male_chunks, female_chunks = [], []
@@ -177,6 +178,17 @@ class Classify:
             self.corpus.chunks.append(x)
         for x in female_chunks:
             self.corpus.chunks.append(x)
+
+    def create_bows(self):
+        self.chunk_bows = []
+
+        for chunk in self.corpus.chunks:
+            cv = CountVectorizer()
+            ch_bow = cv.fit_transform(chunk[0])
+            self.chunk_bows.append(ch_bow)
+
+    def create_vectors(self):   # TODO: implement this method for task 4.6
+        pass
 
     def get_counters(self):
         if len(self.corpus.chunks) == 0:
@@ -219,6 +231,8 @@ if __name__ == '__main__':
 
     output_text += "After Down-Sampling:\n"
     output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
+
+    classify.create_bows()
 
     output_text += "== BoW Classification ==\n"
     output_text += "Cross Validation Accuracy: "  # TODO: add accuracy
