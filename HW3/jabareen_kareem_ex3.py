@@ -4,6 +4,7 @@ from sys import argv
 from bs4 import BeautifulSoup  # will use it in order to parse xml files
 import glob  # will use it in order to get the names of files
 import gender_guesser.detector as gen
+from sklearn.feature_extraction.text import CountVectorizer
 
 
 class Token:
@@ -28,25 +29,6 @@ class Corpus:
         self.sentences = []
         self.chunks = []
 
-    @staticmethod
-    def chunk_to_str(ch):
-        res = ""
-        for _sen in ch:
-            for i in range(len(_sen.tokens)):
-                res += _sen.tokens[i].word
-                if i == len(_sen.tokens) - 1:
-                    res += '.\n'
-                else:
-                    res += ' '
-
-        return res
-
-    @staticmethod
-    def get_gender_by_chunk(curr_chunk):
-        chunk_string = Corpus.chunk_to_str(curr_chunk)
-        gen_detector = gen.Detector()
-        return gen_detector.get_gender(chunk_string)
-
     def add_xml_file_to_corpus(self, file_name: str):
         """
         This method will receive a file name, such that the file is an XML file (from the BNC), read the content from
@@ -54,22 +36,29 @@ class Corpus:
         :param file_name: The name of the XML file that will be read
         :return: None
         """
-
         with open(file_name, 'r') as f:  # reading file
             data = f.read()
 
         # we shall parse the xml file right now
 
         wtext = BeautifulSoup(data, "xml").find("wtext")
-        has_author_name = True
+        writer_gender = None
 
-        if wtext is None:       # the file is stext which has no author name
-            has_author_name = False
+        if wtext is None:  # the file is stext which has no author name
             stext = BeautifulSoup(data, "xml").find("stext")
             heads = stext.find_all('head')
             ps = stext.find_all('p')
 
         else:
+            writer_full_name = BeautifulSoup(data, "xml").find('bncDoc').find('teiHeader').find('fileDesc')
+            writer_full_name = writer_full_name.find('sourceDesc').find('bibl').find('imprint').find('publisher')
+            writer_full_name = writer_full_name.text
+
+            if writer_full_name is not None and '&' not in writer_full_name:  # there is exactly one writer
+                d = gen.Detector()
+                writer_full_name = writer_full_name.split(' ')
+                writer_gender = d.get_gender(writer_full_name[-1])
+
             heads = wtext.find_all('head')
             ps = wtext.find_all('p')
 
@@ -91,29 +80,23 @@ class Corpus:
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'head', len(tokens)))  # adding a new sentence each loop
 
-        last_chunk = []     # we consider chunks from paragraphs only
+        last_chunk = []  # we consider chunks from paragraphs only
 
         for sent in p_sent:
             words = sent.find_all('w')
             tokens = []
 
             for word in words:
-                tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
-                tokens.append(tok)
+                if len(word.contents) > 0:
+                    tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
+                    tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'p', len(tokens)))
 
-            if has_author_name:
+            if writer_gender is not None:
                 last_chunk.append(Sentence(tokens, 'head', len(tokens)))
 
                 if len(last_chunk) == 10:
-                    writer_gender = Corpus.get_gender_by_chunk(last_chunk)
-                    # getting the writer's gender based on the chunk
-
-                    for sentence in last_chunk:
-                        # updating Sentence objects in the chunk with the writer's predicted gender
-                        sentence.gender = writer_gender
-
-                    self.chunks.append(last_chunk)
+                    self.chunks.append((last_chunk, writer_gender))
                     last_chunk = []
 
     def add_text_file_to_corpus(self, file_name: str):
@@ -168,8 +151,13 @@ class Classify:
         self.corpus = corpus
 
     def down_sample(self):
-        male_chunks = [x for x in self.corpus.chunks if x[0].get_gender() == 'male']
-        female_chunks = [x for x in self.corpus.chunks if x[0].get_gender() == 'female']
+        male_chunks, female_chunks = [], []
+
+        for ch in self.corpus.chunks:
+            if ch[1] == u'male' or ch[1] == 'male':
+                male_chunks.append(ch)
+            elif ch[1] == u'female' or ch[1] == 'female':
+                female_chunks.append(ch)
 
         if len(male_chunks) == len(female_chunks):
             return
@@ -177,31 +165,45 @@ class Classify:
         chunks_to_drop = abs(len(male_chunks) - len(female_chunks))
 
         if len(male_chunks) > len(female_chunks):
-            male_chunks.remove(v for v in random.sample(male_chunks, chunks_to_drop))
+            for sam in random.sample(male_chunks, chunks_to_drop):
+                male_chunks.remove(sam)
         else:
-            female_chunks.remove(v for v in random.sample(female_chunks, chunks_to_drop))
+            for sam in random.sample(female_chunks, chunks_to_drop):
+                female_chunks.remove(sam)
 
-        male_chunks.extend(female_chunks)
-        self.corpus.chunks = [].extend(male_chunks)
+        self.corpus.chunks = []
+
+        for x in male_chunks:
+            self.corpus.chunks.append(x)
+        for x in female_chunks:
+            self.corpus.chunks.append(x)
 
     def get_counters(self):
-        male_counter = len([x for x in self.corpus.chunks if x[0].get_gender() == 'male'])
-        female_counter = len([x for x in self.corpus.chunks if x[0].get_gender() == 'female'])
+        if len(self.corpus.chunks) == 0:
+            return 0, 0
+
+        male_counter, female_counter = 0, 0
+
+        for ch in self.corpus.chunks:
+            if ch[1] == 'male' or ch[1] == u'male':
+                male_counter += 1
+            elif ch[1] == 'female' or ch[1] == u'female':
+                female_counter += 1
 
         return female_counter, male_counter
 
 
 if __name__ == '__main__':
 
-    xml_dir = argv[1]          # directory containing xml files from the BNC corpus, full path
-    output_file = argv[2]      # output file name, full path
+    xml_dir = argv[1]  # directory containing xml files from the BNC corpus, full path
+    output_file = argv[2]  # output file name, full path
 
     xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
 
     corp = Corpus()
 
     for file in xml_files:
-        corp.add_xml_file_to_corpus(file)      # adding all xml files to the corpus
+        corp.add_xml_file_to_corpus(file)  # adding all xml files to the corpus
 
     classify = Classify(corpus=corp)
 
@@ -219,11 +221,12 @@ if __name__ == '__main__':
     output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
 
     output_text += "== BoW Classification ==\n"
+    output_text += "Cross Validation Accuracy: "  # TODO: add accuracy
+
+    output_text += "\n== Custom Feature Vector Classification ==\n"
     output_text += "Cross Validation Accuracy: "    # TODO: add accuracy
 
-    # TODO: add Custom Feature Vector Classification results
-
-    with open(output_text, 'w', encoding='utf-8') as jabber:
+    with open(output_file, 'w', encoding='utf-8') as jabber:
         jabber.write(output_text)
 
     # 4. Print onto the output file the results from the second task in the wanted format.
