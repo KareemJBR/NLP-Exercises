@@ -8,10 +8,10 @@ import glob  # will use it in order to get the names of files
 import gender_guesser.detector as gen
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import KFold
+# from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
 
 
 class Token:
@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
     # classifying ..
 
-    k_folds = KFold(n_splits=10)
+    # k_folds = KFold(n_splits=10)
     knn = KNeighborsClassifier()
     classify.create_bows()
     classify.create_custom_vectors()
@@ -274,12 +274,15 @@ if __name__ == '__main__':
     for chunk in classify.corpus.chunks:
         y_vector.append(chunk[1])
 
-    for train_index, test_index in k_folds.split(X=classify.chunk_bows, y=y_vector):     # cross validation algorithm
-        knn.fit(train_index, test_index)
-        y_predictions = knn.predict()       # TODO: finish k-folds for both vectorizing methods
+    # for train_index, test_index in k_folds.split(X=classify.chunk_bows, y=y_vector):     # cross validation algorithm
+    #     knn.fit(classify.chunk_bows[train_index], y_vector[train_index])
+    #     y_predictions = knn.predict(y_vector[test_index])
+
+    scores = cross_val_score(knn, classify.chunk_bows, y_vector)
 
     output_text += "== BoW Classification ==\n"
     output_text += "Cross Validation Accuracy: "
+    output_text += str(scores) + '\n\n'
 
     # split into test and train algorithm
     x_train, x_test, y_train, y_test = train_test_split(classify.chunk_bows, y_vector, test_size=0.3)
@@ -291,8 +294,11 @@ if __name__ == '__main__':
     output_text += str(accuracy_score(y_test, y_predictions))       # output accuracy for splitting into train and test
     output_text += '\n'
 
+    scores = cross_val_score(knn, classify.custom_vectors, y_vector)
+
     output_text += "\n== Custom Feature Vector Classification ==\n"
     output_text += "Cross Validation Accuracy: "
+    output_text += str(scores) + '\n\n'
 
     # split into test and train algorithm
     x_train, x_test, y_train, y_test = train_test_split(classify.custom_vectors, y_vector, test_size=0.3)
@@ -306,5 +312,3 @@ if __name__ == '__main__':
 
     with open(output_file, 'w', encoding='utf-8') as jabber:
         jabber.write(output_text)
-
-    # 4. Print onto the output file the results from the second task in the wanted format.
