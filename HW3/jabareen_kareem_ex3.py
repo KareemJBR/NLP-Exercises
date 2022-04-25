@@ -1,10 +1,17 @@
 # student id: 211406343
+
 import random
 from sys import argv
+import numpy as np
 from bs4 import BeautifulSoup  # will use it in order to parse xml files
 import glob  # will use it in order to get the names of files
 import gender_guesser.detector as gen
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score
 
 
 class Token:
@@ -150,6 +157,7 @@ class Classify:
     def __init__(self, corpus):
         self.corpus = corpus
         self.chunk_bows = []
+        self.custom_vectors = []
 
     def down_sample(self):
         male_chunks, female_chunks = [], []
@@ -182,13 +190,36 @@ class Classify:
     def create_bows(self):
         self.chunk_bows = []
 
-        for chunk in self.corpus.chunks:
+        for chunk_ in self.corpus.chunks:
+            chunk_text = ""
+
+            for sen in chunk_[0]:
+                for i in range(len(sen.tokens)):
+                    chunk_text += sen.rokens[i].word
+                    if i != len(sen.tokens) - 1:
+                        chunk_text += ' '
+                chunk_text += '\n'
+
+            chunk_text = chunk_text[0: len(chunk_text) - 1]     # ignoring the last \n
+
             cv = CountVectorizer()
-            ch_bow = cv.fit_transform(chunk[0])
+            ch_bow = cv.fit_transform(chunk_text)
             self.chunk_bows.append(ch_bow)
 
-    def create_vectors(self):   # TODO: implement this method for task 4.6
-        pass
+        self.chunk_bows = np.array(self.chunk_bows)     # converting a list of lists to a 2D matrix
+
+    def create_custom_vectors(self):
+        self.custom_vectors = []
+
+        for chunk_ in self.corpus.chunks:
+            sens_len = []
+            for i in range(10):
+                curr_len = len(chunk_[0][i].split(' '))
+                sens_len.append(curr_len)
+
+            self.custom_vectors.append(sens_len)
+
+        self.custom_vectors = np.array(self.custom_vectors)     # converting a list of lists to a 2D matrix
 
     def get_counters(self):
         if len(self.corpus.chunks) == 0:
@@ -232,13 +263,46 @@ if __name__ == '__main__':
     output_text += "After Down-Sampling:\n"
     output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
 
+    # classifying ..
+
+    k_folds = KFold(n_splits=10)
+    knn = KNeighborsClassifier()
     classify.create_bows()
+    classify.create_custom_vectors()
+
+    y_vector = []
+    for chunk in classify.corpus.chunks:
+        y_vector.append(chunk[1])
+
+    for train_index, test_index in k_folds.split(X=classify.chunk_bows, y=y_vector):     # cross validation algorithm
+        knn.fit(train_index, test_index)
+        y_predictions = knn.predict()       # TODO: finish k-folds for both vectorizing methods
 
     output_text += "== BoW Classification ==\n"
-    output_text += "Cross Validation Accuracy: "  # TODO: add accuracy
+    output_text += "Cross Validation Accuracy: "
+
+    # split into test and train algorithm
+    x_train, x_test, y_train, y_test = train_test_split(classify.chunk_bows, y_vector, test_size=0.3)
+
+    knn.fit(x_train, y_train)
+    y_predictions = knn.predict(x_test)
+
+    output_text += "Splitting into train and test sets Accuracy: "
+    output_text += str(accuracy_score(y_test, y_predictions))       # output accuracy for splitting into train and test
+    output_text += '\n'
 
     output_text += "\n== Custom Feature Vector Classification ==\n"
-    output_text += "Cross Validation Accuracy: "    # TODO: add accuracy
+    output_text += "Cross Validation Accuracy: "
+
+    # split into test and train algorithm
+    x_train, x_test, y_train, y_test = train_test_split(classify.custom_vectors, y_vector, test_size=0.3)
+
+    knn.fit(x_train, y_train)
+    y_predictions = knn.predict(x_test)
+
+    output_text += "Splitting into train and test sets Accuracy: "
+    output_text += str(accuracy_score(y_test, y_predictions))  # output accuracy for splitting into train and test
+    output_text += '\n'
 
     with open(output_file, 'w', encoding='utf-8') as jabber:
         jabber.write(output_text)
