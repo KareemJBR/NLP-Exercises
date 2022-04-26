@@ -58,11 +58,13 @@ class Corpus:
 
         else:
             writer_full_name = BeautifulSoup(data, "xml").find('bncDoc').find('teiHeader').find('fileDesc')
-            writer_full_name = writer_full_name.find('sourceDesc').find('bibl').find('imprint').find('publisher')
-            writer_full_name = writer_full_name.text
+            writer_full_name = writer_full_name.find('sourceDesc').find('bibl')
 
-            if writer_full_name is not None and '&' not in writer_full_name:  # there is exactly one writer
+            temp = writer_full_name.find_all('author')
+
+            if temp is not None and len(temp) == 1:  # there is exactly one writer
                 d = gen.Detector()
+                writer_full_name = writer_full_name.find('author').text
                 writer_full_name = writer_full_name.split(' ')
                 writer_gender = d.get_gender(writer_full_name[-1])
 
@@ -188,25 +190,18 @@ class Classify:
             self.corpus.chunks.append(x)
 
     def create_bows(self):
-        self.chunk_bows = []
+        temp = []
 
         for chunk_ in self.corpus.chunks:
-            chunk_text = ""
+            chunk_text = ''
+            for sen_ in chunk_[0]:
+                for tok in sen_.tokens:
+                    chunk_text += tok.word + ' '
 
-            for sen in chunk_[0]:
-                for i in range(len(sen.tokens)):
-                    chunk_text += sen.rokens[i].word
-                    if i != len(sen.tokens) - 1:
-                        chunk_text += ' '
-                chunk_text += '\n'
+            temp.append(chunk_text)
 
-            chunk_text = chunk_text[0: len(chunk_text) - 1]     # ignoring the last \n
-
-            cv = CountVectorizer()
-            ch_bow = cv.fit_transform(chunk_text)
-            self.chunk_bows.append(ch_bow)
-
-        self.chunk_bows = np.array(self.chunk_bows)     # converting a list of lists to a 2D matrix
+        cv = CountVectorizer()
+        return cv.fit_transform(temp)
 
     def create_custom_vectors(self):
         self.custom_vectors = []
@@ -214,7 +209,7 @@ class Classify:
         for chunk_ in self.corpus.chunks:
             sens_len = []
             for i in range(10):
-                curr_len = len(chunk_[0][i].split(' '))
+                curr_len = len(chunk_[0][i].tokens)
                 sens_len.append(curr_len)
 
             self.custom_vectors.append(sens_len)
@@ -238,8 +233,11 @@ class Classify:
 
 if __name__ == '__main__':
 
-    xml_dir = argv[1]  # directory containing xml files from the BNC corpus, full path
-    output_file = argv[2]  # output file name, full path
+    # xml_dir = argv[1]  # directory containing xml files from the BNC corpus, full path
+    # output_file = argv[2]  # output file name, full path
+
+    xml_dir = 'XML_files'
+    output_file = 'output.txt'
 
     xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
 

@@ -1,9 +1,6 @@
 Before Down-Sampling:
-Female 23	Male: 0
+Female 280	Male: 652
 
 After Down-Sampling:
-Female 0	Male: 0
+Female 280	Male: 280
 
-== BoW Classification ==
-Cross Validation Accuracy: == Custom Feature Vector Classification ==
-Cross Validation Accuracy: 
