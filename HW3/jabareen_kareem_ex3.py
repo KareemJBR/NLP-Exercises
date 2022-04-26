@@ -55,7 +55,7 @@ class Corpus:
             heads = stext.find_all('head')
             ps = stext.find_all('p')
 
-        else:
+        else:   # wtext xml file
             writer_full_name = BeautifulSoup(data, "xml").find('bncDoc').find('teiHeader').find('fileDesc')
             writer_full_name = writer_full_name.find('sourceDesc').find('bibl')
 
@@ -65,7 +65,7 @@ class Corpus:
                 d = gen.Detector()
                 writer_full_name = writer_full_name.find('author').text
                 writer_full_name = writer_full_name.split(' ')
-                writer_gender = d.get_gender(writer_full_name[-1])
+                writer_gender = d.get_gender(writer_full_name[-1])  # getting the author's first name
 
             heads = wtext.find_all('head')
             ps = wtext.find_all('p')
@@ -161,6 +161,7 @@ class Classify:
         self.custom_vectors = []
 
     def down_sample(self):
+        """Performs down-sampling on the chunks in `corpus`."""
         male_chunks, female_chunks = [], []
 
         for ch in self.corpus.chunks:
@@ -169,12 +170,12 @@ class Classify:
             elif ch[1] == u'female' or ch[1] == 'female':
                 female_chunks.append(ch)
 
-        if len(male_chunks) == len(female_chunks):
+        if len(male_chunks) == len(female_chunks):      # already balanced
             return
 
         chunks_to_drop = abs(len(male_chunks) - len(female_chunks))
 
-        if len(male_chunks) > len(female_chunks):
+        if len(male_chunks) > len(female_chunks):   # removing chunks
             for sam in random.sample(male_chunks, chunks_to_drop):
                 male_chunks.remove(sam)
         else:
@@ -183,12 +184,13 @@ class Classify:
 
         self.corpus.chunks = []
 
-        for x in male_chunks:
+        for x in male_chunks:       # update corpus attribute
             self.corpus.chunks.append(x)
         for x in female_chunks:
             self.corpus.chunks.append(x)
 
     def create_bows(self):
+        """Creates Bags of Words based on chunks in `corpus` and updates the attribute `chunk_bows`."""
         temp_ = []
 
         for chunk_ in self.corpus.chunks:
@@ -203,6 +205,7 @@ class Classify:
         self.chunk_bows = cv.fit_transform(temp_)
 
     def create_custom_vectors(self):
+        """Creates vectors of features for each chunk in `corpus` based on the length of the sentences in each chunk."""
         self.custom_vectors = []
 
         for chunk_ in self.corpus.chunks:
@@ -216,6 +219,8 @@ class Classify:
         self.custom_vectors = np.array(self.custom_vectors)     # converting a list of lists to a 2D matrix
 
     def get_counters(self):
+        """Returns a tuple containing the number of chunks written by a female and the number of ones written by a
+        male."""
         if len(self.corpus.chunks) == 0:
             return 0, 0
 
@@ -244,15 +249,15 @@ if __name__ == '__main__':
 
     classify = Classify(corpus=corp)
 
-    output_text = ""
+    output_text = ""    # will contain the data to write to the output file
 
-    f_chunks_counter, m_chunks_counter = classify.get_counters()
+    f_chunks_counter, m_chunks_counter = classify.get_counters()    # getting initial counters after adding xml files
 
     output_text += "Before Down-Sampling:\n"
     output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
 
     classify.down_sample()
-    f_chunks_counter, m_chunks_counter = classify.get_counters()
+    f_chunks_counter, m_chunks_counter = classify.get_counters()    # getting updated counters after down sampling
 
     output_text += "After Down-Sampling:\n"
     output_text += "Female " + str(f_chunks_counter) + "\tMale: " + str(m_chunks_counter) + "\n\n"
@@ -267,13 +272,13 @@ if __name__ == '__main__':
     for chunk in classify.corpus.chunks:
         y_vector.append(chunk[1])
 
-    scores = cross_val_score(knn, classify.chunk_bows, y_vector, cv=10)
+    scores = cross_val_score(knn, classify.chunk_bows, y_vector, cv=10)     # 10-fold cross validation
 
     output_text += "== BoW Classification ==\n"
     output_text += "Cross Validation Accuracy: "
     output_text += "["
 
-    for index in range(len(scores)):
+    for index in range(len(scores)):    # printing the list of scores for KNN classifier using 10-fold cross validation
         output_text += str(scores[index])[:5]
 
         if index != len(scores) - 1:
@@ -281,7 +286,7 @@ if __name__ == '__main__':
         else:
             output_text += ']\n\n'
 
-    # split into test and train algorithm
+    # split into train and test algorithm in the ratio 7:3
     x_train, x_test, y_train, y_test = train_test_split(classify.chunk_bows, y_vector, test_size=0.3)
 
     knn.fit(x_train, y_train)
@@ -292,6 +297,7 @@ if __name__ == '__main__':
     output_text += '\n'
 
     scores = cross_val_score(knn, classify.custom_vectors, y_vector, cv=10)
+    # repeating classifying but this time using our custom feature vectors
 
     output_text += "\n== Custom Feature Vector Classification ==\n"
     output_text += "Cross Validation Accuracy: "
@@ -315,5 +321,5 @@ if __name__ == '__main__':
     output_text += str(accuracy_score(y_test, y_predictions))  # output accuracy for splitting into train and test
     output_text += '\n'
 
-    with open(output_file, 'w', encoding='utf-8') as jabber:
+    with open(output_file, 'w', encoding='utf-8') as jabber:  # write the final results to the output text file in UTF-8
         jabber.write(output_text)
