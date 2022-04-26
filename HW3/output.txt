@@ -4,3 +4,12 @@ Female 280	Male: 652
 After Down-Sampling:
 Female 280	Male: 280
 
+== BoW Classification ==
+Cross Validation Accuracy: [0.571, 0.428, 0.553, 0.857, 0.839, 0.553, 0.553, 0.553, 0.696, 0.464]
+
+Splitting into train and test sets Accuracy: 0.6666666666666666
+
+== Custom Feature Vector Classification ==
+Cross Validation Accuracy: [0.392, 0.339, 0.446, 0.517, 0.5, 0.482, 0.589, 0.660, 0.5, 0.660]
+
+Splitting into train and test sets Accuracy: 0.5654761904761905

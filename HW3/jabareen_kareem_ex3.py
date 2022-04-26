@@ -8,7 +8,6 @@ import glob  # will use it in order to get the names of files
 import gender_guesser.detector as gen
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
@@ -190,7 +189,7 @@ class Classify:
             self.corpus.chunks.append(x)
 
     def create_bows(self):
-        temp = []
+        temp_ = []
 
         for chunk_ in self.corpus.chunks:
             chunk_text = ''
@@ -198,10 +197,10 @@ class Classify:
                 for tok in sen_.tokens:
                     chunk_text += tok.word + ' '
 
-            temp.append(chunk_text)
+            temp_.append(chunk_text)
 
         cv = CountVectorizer()
-        return cv.fit_transform(temp)
+        self.chunk_bows = cv.fit_transform(temp_)
 
     def create_custom_vectors(self):
         self.custom_vectors = []
@@ -233,11 +232,8 @@ class Classify:
 
 if __name__ == '__main__':
 
-    # xml_dir = argv[1]  # directory containing xml files from the BNC corpus, full path
-    # output_file = argv[2]  # output file name, full path
-
-    xml_dir = 'XML_files'
-    output_file = 'output.txt'
+    xml_dir = argv[1]  # directory containing xml files from the BNC corpus, full path
+    output_file = argv[2]  # output file name, full path
 
     xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
 
@@ -263,7 +259,6 @@ if __name__ == '__main__':
 
     # classifying ..
 
-    # k_folds = KFold(n_splits=10)
     knn = KNeighborsClassifier()
     classify.create_bows()
     classify.create_custom_vectors()
@@ -272,15 +267,19 @@ if __name__ == '__main__':
     for chunk in classify.corpus.chunks:
         y_vector.append(chunk[1])
 
-    # for train_index, test_index in k_folds.split(X=classify.chunk_bows, y=y_vector):     # cross validation algorithm
-    #     knn.fit(classify.chunk_bows[train_index], y_vector[train_index])
-    #     y_predictions = knn.predict(y_vector[test_index])
-
-    scores = cross_val_score(knn, classify.chunk_bows, y_vector)
+    scores = cross_val_score(knn, classify.chunk_bows, y_vector, cv=10)
 
     output_text += "== BoW Classification ==\n"
     output_text += "Cross Validation Accuracy: "
-    output_text += str(scores) + '\n\n'
+    output_text += "["
+
+    for index in range(len(scores)):
+        output_text += str(scores[index])[:5]
+
+        if index != len(scores) - 1:
+            output_text += ', '
+        else:
+            output_text += ']\n\n'
 
     # split into test and train algorithm
     x_train, x_test, y_train, y_test = train_test_split(classify.chunk_bows, y_vector, test_size=0.3)
@@ -292,11 +291,19 @@ if __name__ == '__main__':
     output_text += str(accuracy_score(y_test, y_predictions))       # output accuracy for splitting into train and test
     output_text += '\n'
 
-    scores = cross_val_score(knn, classify.custom_vectors, y_vector)
+    scores = cross_val_score(knn, classify.custom_vectors, y_vector, cv=10)
 
     output_text += "\n== Custom Feature Vector Classification ==\n"
     output_text += "Cross Validation Accuracy: "
-    output_text += str(scores) + '\n\n'
+    output_text += "["
+
+    for index in range(len(scores)):
+        output_text += str(scores[index])[:5]
+
+        if index != len(scores) - 1:
+            output_text += ', '
+        else:
+            output_text += ']\n\n'
 
     # split into test and train algorithm
     x_train, x_test, y_train, y_test = train_test_split(classify.custom_vectors, y_vector, test_size=0.3)
