@@ -23,11 +23,10 @@ class Token:
 
 
 class Sentence:
-    def __init__(self, tokens, parent, size, gender='unknown'):
+    def __init__(self, tokens, parent, size):
         self.tokens = tokens
         self.parent = parent
         self.size = size
-        self.gender = gender
 
 
 class Corpus:
@@ -69,11 +68,11 @@ class Corpus:
                 writers_genders.add(d.get_gender(temp[-1]))
 
             if ('male' in writers_genders and len(writers_genders) == 1) or \
-                    (u'male' in writers_genders and len(writers_genders) == 1):     # all authors are males
+                    (u'male' in writers_genders and len(writers_genders) == 1):  # all authors are males
                 writer_gender = 'male'
 
             elif ('female' in writers_genders and len(writers_genders) == 1) or \
-                    (u'female' in writers_genders and len(writers_genders) == 1):   # all authors are females
+                    (u'female' in writers_genders and len(writers_genders) == 1):  # all authors are females
                 writer_gender = 'female'
 
             heads = wtext.find_all('head')
@@ -214,18 +213,44 @@ class Classify:
         self.chunk_bows = cv.fit_transform(temp_)
 
     def create_custom_vectors(self):
-        """Creates vectors of features for each chunk in `corpus` based on the length of the sentences in each chunk."""
+        """Creates vectors of features for each chunk in `corpus` based on the number of keywords in the chunk."""
         self.custom_vectors = []
 
+        male_pronouns = ['he', 'his', 'man', 'men', 'boy', 'gentleman', 'gentlemen', 'dad', 'father', 'fathers', 'son',
+                         'uncle', 'brother', 'bro', 'grandfather', 'grandson']
+
+        female_pronouns = ['she', 'her', 'hers', 'woman', 'women', 'girl', 'lady', 'ladies', 'mom', 'mother', 'mothers',
+                           'daughter', 'aunt', 'sister', 'sis', 'grandmother', 'granddaughter']
+
+        mixed_pronouns = ['i', 'we', 'us', 'they', 'their', 'them', 'you', 'people', 'parents', 'parent']
+
+        positive_adjectives = ['happy', 'pleased', 'hopeful', 'strong', 'delighted', 'delightful', 'bright', 'creative',
+                               'optimistic', 'brave', 'polite', 'faithful', 'excellent', 'good', 'perfect']
+
+        negative_adjectives = ['sad', 'bad', 'pessimistic', 'rude', 'weak', 'coward', 'awkward', 'aggressive',
+                               'arrogant', 'harsh']
+
+        time_place_connectors = ['after', 'before', 'between', 'above', 'beneath', 'on', 'under', 'at', 'behind', 'in',
+                                 'next', 'previous']
+
+        connectors = ['however', 'furthermore', 'addition', 'despite', 'and', 'so', 'but', 'have', 'has', 'not',
+                      'do', 'does', 'despite', 'because', 'too', 'also', 'or', 'like', 'as']
+
+        all_lists = [male_pronouns, female_pronouns, mixed_pronouns, positive_adjectives, negative_adjectives,
+                     time_place_connectors, connectors]
+
         for chunk_ in self.corpus.chunks:
-            sens_len = []
-            for i in range(10):
-                curr_len = len(chunk_[0][i].tokens)
-                sens_len.append(curr_len)
+            curr_vec = [0, 0, 0, 0, 0, 0, 0]
 
-            self.custom_vectors.append(sens_len)
+            for sen in chunk_[0]:
+                for tok in sen.tokens:
+                    for i in range(len(all_lists)):
+                        if tok.word.lower() in all_lists[i]:
+                            curr_vec[i] += 1
 
-        self.custom_vectors = np.array(self.custom_vectors)  # converting a list of lists to a 2D matrix
+            self.custom_vectors.append(curr_vec)
+
+        self.custom_vectors = np.array(self.custom_vectors)
 
     def get_counters(self):
         """Returns a tuple containing the number of chunks written by a female and the number of ones written by a
