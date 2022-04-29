@@ -9,7 +9,6 @@ import gender_guesser.detector as gen
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import classification_report
 
