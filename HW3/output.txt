@@ -5,23 +5,23 @@ After Down-Sampling:
 Female 280	Male: 280
 
 == BoW Classification ==
-Cross Validation Accuracy: 63.214%
+Cross Validation Accuracy: 61.071%
               precision    recall  f1-score   support
 
-        male       0.75      0.84      0.79        89
-      female       0.79      0.68      0.73        79
+        male       0.75      0.86      0.80        88
+      female       0.82      0.68      0.74        80
 
     accuracy                           0.77       168
-   macro avg       0.77      0.76      0.76       168
-weighted avg       0.77      0.77      0.77       168
+   macro avg       0.78      0.77      0.77       168
+weighted avg       0.78      0.77      0.77       168
 
 == Custom Feature Vector Classification ==
-Cross Validation Accuracy: 57.857%
+Cross Validation Accuracy: 55.535%
               precision    recall  f1-score   support
 
-        male       0.50      0.68      0.58        72
-      female       0.67      0.49      0.57        96
+        male       0.59      0.65      0.62        88
+      female       0.57      0.51      0.54        80
 
-    accuracy                           0.57       168
-   macro avg       0.59      0.59      0.57       168
-weighted avg       0.60      0.57      0.57       168
+    accuracy                           0.58       168
+   macro avg       0.58      0.58      0.58       168
+weighted avg       0.58      0.58      0.58       168
