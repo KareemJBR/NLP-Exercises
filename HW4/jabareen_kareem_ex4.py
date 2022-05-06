@@ -173,19 +173,9 @@ class Corpus:
         with open(file_name, 'w', encoding='utf-8') as f:  # writing the final result to the output file in utf-8
             f.write(text_)
 
+    def change_word(self, word):
+        pass
 
-# # Do the following only once!
-#
-#     # Save the GloVe text file to a word2vec file for your use:
-#     glove2word2vec(< downloaded_text_filename >, < full_path_vector_filename >)
-#     # Load the file as KeyVectors:
-#     pre_trained_model = KeyedVectors.load_word2vec_format( < full_path_vector_filename.kv >, binary = False)
-#     # Save the key vectors for your use:
-#     pre_trained_model.save( < full_path_keyvector_filename.kv >)
-#
-#     # Now, when handing the project, the KeyVector filename will be given as an argument.
-#     # You can load it as follwing:
-#     pre_trained_model = KeyedVectors.load( < full_path_keyvector_filename >.kv, mmap = 'r')
 
 if __name__ == "__main__":
 
