@@ -1,13 +1,13 @@
-from gensim.scripts.glove2word2vec import glove2word2vec
-from gensim.models import KeyedVectors
+# from gensim.scripts.glove2word2vec import glove2word2vec
+# from gensim.models import KeyedVectors
 from sys import argv
 from bs4 import BeautifulSoup
 import glob
 import re
 import os
 
-
 # The Corpus class from previous exercises:
+
 
 class Token:
     def __init__(self, t, word, c5, hw, pos):
@@ -174,21 +174,21 @@ class Corpus:
             f.write(text_)
 
 
-## Do the following only once!
-
-## Save the GloVe text file to a word2vec file for your use:
-# glove2word2vec(<downloaded_text_filename>, <full_path_vector_filename>')
-## Load the file as KeyVectors:
-# pre_trained_model = KeyedVectors.load_word2vec_format(<full_path_vector_filename.kv>, binary=False)
-## Save the key vectors for your use:
-# pre_trained_model.save(<full_path_keyvector_filename.kv>)
-
-## Now, when handing the project, the KeyVector filename will be given as an argument.
-## You can load it as follwing:
-# pre_trained_model = KeyedVectors.load(<full_path_keyvector_filename>.kv, mmap='r')
-
+# # Do the following only once!
+#
+#     # Save the GloVe text file to a word2vec file for your use:
+#     glove2word2vec(< downloaded_text_filename >, < full_path_vector_filename >)
+#     # Load the file as KeyVectors:
+#     pre_trained_model = KeyedVectors.load_word2vec_format( < full_path_vector_filename.kv >, binary = False)
+#     # Save the key vectors for your use:
+#     pre_trained_model.save( < full_path_keyvector_filename.kv >)
+#
+#     # Now, when handing the project, the KeyVector filename will be given as an argument.
+#     # You can load it as follwing:
+#     pre_trained_model = KeyedVectors.load( < full_path_keyvector_filename >.kv, mmap = 'r')
 
 if __name__ == "__main__":
+
     kv_file = argv[1]
     xml_dir = argv[2]          # directory containing xml files from the BNC corpus (not a zip file)
     lyrics_file = argv[3]
@@ -204,6 +204,3 @@ if __name__ == "__main__":
     corpus.add_text_file_to_corpus(lyrics_file)
 
     output_text = ""
-
-
-
