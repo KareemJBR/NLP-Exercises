@@ -2,6 +2,7 @@ from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
 from sys import argv
 from bs4 import BeautifulSoup
+import glob
 import re
 import os
 
@@ -193,3 +194,16 @@ if __name__ == "__main__":
     lyrics_file = argv[3]
     tweets_file = argv[4]
     output_file = argv[5]
+
+    xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
+
+    corpus = Corpus()
+
+    for xml_file in xml_files:
+        corpus.add_xml_file_to_corpus(xml_file)
+    corpus.add_text_file_to_corpus(lyrics_file)
+
+    output_text = ""
+
+
+
