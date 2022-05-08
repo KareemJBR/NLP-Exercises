@@ -1,7 +1,10 @@
-# from gensim.scripts.glove2word2vec import glove2word2vec
-# from gensim.models import KeyedVectors
+from gensim.scripts.glove2word2vec import glove2word2vec
+from gensim.models import KeyedVectors
+from gensim.models import word2vec
 from sys import argv
 from bs4 import BeautifulSoup
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 import glob
 import re
 import os
@@ -74,6 +77,32 @@ class Corpus:
                 tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'p', len(tokens)))
 
+    # def add_text_file_to_corpus(self, file_name: str):
+    #     """
+    #     This method will receive a file name, such that the file is a text file (from Wikipedia), read the content
+    #     from it and add it to the corpus in the manner explained in the exercise instructions.
+    #     :param file_name: The name of the text file that will be read
+    #     :return: None
+    #     """
+    #     with open(file_name, 'r', encoding='utf-8') as f:  # reading txt file with utf-8
+    #         # we should not add empty lines and headers
+    #         data = [line.strip() for line in f.readlines() if line[0] != '=' and line.strip() != ""]
+    #
+    #     start_index = 0
+    #
+    #     for line in data:
+    #         for i_ in range(len(line)):
+    #             if line[i_] in '!.\n':
+    #
+    #
+    #         words = line.split()  # splitting the line in order to get the tokens objects
+    #         tokens = []
+    #
+    #         for word in words:
+    #             tok = Token('w', word.replace(' ', ''), None, None, None)
+    #             tokens.append(tok)
+    #         self.sentences.append(Sentence(tokens, 'p', len(tokens)))
+
     def add_text_file_to_corpus(self, file_name: str):
         """
         This method will receive a file name, such that the file is a text file (from Wikipedia), read the content
@@ -91,7 +120,6 @@ class Corpus:
         starters = "(Mr|Mrs|Ms|Dr|He/s|She/s|It/s|They/s|Their/s|Our/s|We/s|But/s|However/s|That/s|This/s|Wherever)"
         acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
         websites = "[.](com|net|org|io|gov)"
-        # etc = "[.][.]"
 
         data = re.sub(prefixes, "\\1<dont_splt>", data)
         data = re.sub(websites, "<dont_splt>\\1", data)
@@ -191,6 +219,69 @@ if __name__ == "__main__":
 
     for xml_file in xml_files:
         corpus.add_xml_file_to_corpus(xml_file)
-    corpus.add_text_file_to_corpus(lyrics_file)
 
-    output_text = ""
+    output_text = "Word Pairs and Distances:\n\n"
+
+    word_pairs = [
+        ('kissing', 'cuddling'),
+        ('adore', 'love'),
+        ('playing', 'games'),
+        ('dancing', 'romancing'),
+        ('smooth', 'newborn'),
+        ('sweet', 'tight'),
+        ('smoke', 'haze'),
+        ('filetes', 'hungry'),
+        ('east', 'west'),
+        ('door', 'open')
+    ]
+
+    for index, word_pair in enumerate(word_pairs):
+        curr_distance = 0   # TODO: calculate distance between word_pair[0] and word_pair[1]
+        output_text += str(index + 1)
+        output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_distance) + "\n"
+
+    output_text += '\nAnalogies:\n\n'
+    half_len = len(word_pairs) // 2
+
+    for i in range(half_len):
+        output_text += str(i + 1) + '. '
+        output_text += word_pairs[2*i][0] + ' : ' + word_pairs[2*i][1] + ' , '
+        output_text += word_pairs[2*i+1][0] + ' : ' + word_pairs[2*i+1][1] + '\n'
+
+    output_text += '\nMost Similar:\n\n'
+    word2vec_model = word2vec.Word2Vec()
+    word2vec_model.load(kv_file)
+
+    model_results = []
+
+    for i in range(half_len):
+        output_text += str(i + 1) + '. '
+        most_similar_word = word2vec_model.most_similar(positive=[word_pairs[2*i][1], word_pairs[2*i+1][0]],
+                                                        negative=[word_pairs[2*i+1][1]])
+
+        model_results.append((word_pairs[2*i][0], most_similar_word))
+
+        output_text += word_pairs[2*i][1] + ' + ' + word_pairs[2*i+1][0] + ' - ' + word_pairs[2*i+1][1] + ' = '
+        output_text += most_similar_word + '\n'
+
+    output_text += '\nDistances:\n\n'
+
+    for i in range(half_len):
+        curr_distance = 0   # TODO: calculate distance between model_results[i][0] and model_results[i][1]
+        output_text += str(i + 1) + '. '
+        output_text += model_results[i][0] + ' - ' + model_results[i][1] + ' : '
+        output_text += str(curr_distance) + '\n'
+
+    output_text += '\n'     # end of task 1
+
+    # task 2 (Easy Grammy)
+    # TODO: finish task 2
+    grammy_corpus = Corpus()
+    grammy_corpus.add_text_file_to_corpus(lyrics_file)
+
+    output_text += '=== New Hit ===\n\n'
+
+    # task 3 (Tweets mapping)
+
+    tweets_corpus = Corpus()
+    tweets_corpus.add_text_file_to_corpus(tweets_file)
