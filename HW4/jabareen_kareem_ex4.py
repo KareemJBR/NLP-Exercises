@@ -13,17 +13,17 @@ import os
 
 
 class Token:
-    def __init__(self, t, word, c5, hw, pos):
+    def __init__(self, t, token_word, c5, hw, pos):
         self.t = t
-        self.word = word
+        self.word = token_word
         self.c5 = c5
         self.hw = hw
         self.pos = pos
 
 
 class Sentence:
-    def __init__(self, tokens, parent, size):
-        self.tokens = tokens
+    def __init__(self, sentence_tokens, parent, size):
+        self.tokens = sentence_tokens
         self.parent = parent
         self.size = size
 
@@ -60,48 +60,26 @@ class Corpus:
 
         for sent in head_sent:
             words = sent.find_all('w')
-            tokens = []
+            tokens_ = []
 
-            for word in words:
+            for t_word in words:
                 # appending tokens to the tokens list
-                tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
-                tokens.append(tok)
-            self.sentences.append(Sentence(tokens, 'head', len(tokens)))  # adding a new sentence each loop
+                tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
+                            t_word.get('pos'))
+
+                tokens_.append(tok)
+            self.sentences.append(Sentence(tokens_, 'head', len(tokens_)))  # adding a new sentence each loop
 
         for sent in p_sent:
             words = sent.find_all('w')
-            tokens = []
+            tokens_ = []
 
-            for word in words:
-                tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
-                tokens.append(tok)
-            self.sentences.append(Sentence(tokens, 'p', len(tokens)))
+            for t_word in words:
+                tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
+                            t_word.get('pos'))
 
-    # def add_text_file_to_corpus(self, file_name: str):
-    #     """
-    #     This method will receive a file name, such that the file is a text file (from Wikipedia), read the content
-    #     from it and add it to the corpus in the manner explained in the exercise instructions.
-    #     :param file_name: The name of the text file that will be read
-    #     :return: None
-    #     """
-    #     with open(file_name, 'r', encoding='utf-8') as f:  # reading txt file with utf-8
-    #         # we should not add empty lines and headers
-    #         data = [line.strip() for line in f.readlines() if line[0] != '=' and line.strip() != ""]
-    #
-    #     start_index = 0
-    #
-    #     for line in data:
-    #         for i_ in range(len(line)):
-    #             if line[i_] in '!.\n':
-    #
-    #
-    #         words = line.split()  # splitting the line in order to get the tokens objects
-    #         tokens = []
-    #
-    #         for word in words:
-    #             tok = Token('w', word.replace(' ', ''), None, None, None)
-    #             tokens.append(tok)
-    #         self.sentences.append(Sentence(tokens, 'p', len(tokens)))
+                tokens_.append(tok)
+            self.sentences.append(Sentence(tokens_, 'p', len(tokens_)))
 
     def add_text_file_to_corpus(self, file_name: str):
         """
@@ -110,71 +88,18 @@ class Corpus:
         :param file_name: The name of the text file that will be read
         :return: None
         """
-        with open(os.path.join(os.getcwd(), file_name), 'r', encoding='utf8') as f:
-            data = f.read()
+        with open(file_name, 'r', encoding='utf-8') as f:  # reading txt file with utf-8
+            # we should not add empty lines and headers
+            data = [t_line.strip() for t_line in f.readlines() if t_line[0] != '=' and t_line.strip() != ""]
 
-        alphabets = "([A-Za-z])"
-        numbers = "([0-9])"
-        prefixes = "(Mr|St|Mrs|Ms|Dr|Prof|Capt|Cpt|Lt|Mt)[.]"
-        suffixes = "(Inc|Ltd|Jr|Sr|Co)"
-        starters = "(Mr|Mrs|Ms|Dr|He/s|She/s|It/s|They/s|Their/s|Our/s|We/s|But/s|However/s|That/s|This/s|Wherever)"
-        acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
-        websites = "[.](com|net|org|io|gov)"
+        for line_ in data:
+            words = line_.split()  # splitting the line in order to get the tokens objects
+            tokens_ = []
 
-        data = re.sub(prefixes, "\\1<dont_splt>", data)
-        data = re.sub(websites, "<dont_splt>\\1", data)
-        data = re.sub(" " + alphabets + "[.] ", " \\1<dont_splt> ", data)  # examples (W. Bush, H.W ...)
-        data = re.sub(acronyms + " " + starters, "\\1<dont_splt> \\2", data)
-        data = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]",
-                      "\\1<dont_splt>\\2<dont_splt>\\3<dont_splt>", data)
-        data = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets,
-                      "\\1<dont_splt>\\2<dont_splt>\\3<dont_splt>", data)
-        data = re.sub(alphabets + "[.]" + alphabets + "[.]", "\\1<dont_splt>\\2", data)  # examples (U. S., H. W.)
-        data = re.sub(numbers + "[.]" + numbers, "\\1<dont_splt>\\2", data)
-        data = re.sub(" " + suffixes + "[.]", " \\1<dont_splt>", data)
-
-        if "”" in data:
-            data = data.replace(".”", "”.")
-        if "\"" in data:
-            data = data.replace(".\"", "\".")
-        if ")" in data:
-            data = data.replace(".)", ").")
-        if "!" in data:
-            data = data.replace("!\"", "\"!")
-        if "?" in data:
-            data = data.replace("?\"", "\"?")
-
-        data = data.replace(".", f'.\n')
-        data = data.replace("?", f'?\n')
-        data = data.replace("!", f'!\n')
-        data = data.replace("<dont_splt>", ".")
-
-        # Removing extra new lines
-        data = re.sub(r'\n+', '\n', data)
-        # Removing double spaces
-        data = re.sub(r' +', ' ', data)
-        # Remove empty titles
-        while re.search('==\n==', data):
-            data = re.sub(r'==+.*?==+\n=', r'=', data)
-        # Take care of an empty title at the end of the string
-        data = re.sub(r'==+.*?==+$', '', data)
-
-        data = data.splitlines()  # list of sentences
-        sentences_list = []
-        for line in data:
-            if len(line) > 0:
-                line = line.split()  # list of tokens
-                tokens = []
-
-                for token in line:
-                    token_obj = Token('w', token, None, None, None)
-                    tokens.append(token_obj)
-
-                sentence_obj = Sentence(tokens, 'p', len(tokens))
-                sentences_list.append(sentence_obj)
-
-        for sen in sentences_list:
-            self.sentences.append(sen)
+            for word_ in words:
+                tok = Token('w', word_.replace(' ', ''), None, None, None)
+                tokens_.append(tok)
+            self.sentences.append(Sentence(tokens_, 'p', len(tokens_)))
 
     def create_text_file(self, file_name: str):
         """
@@ -186,11 +111,11 @@ class Corpus:
         text_ = ""  # indicates the final result
 
         for sentence in self.sentences:
-            tokens = []
-            for i in range(sentence.size):
-                tokens.append(sentence.tokens[i].word)  # unpacking tokens
+            tokenss = []
+            for j_ in range(sentence.size):
+                tokenss.append(sentence.tokens[j_].word)  # unpacking tokens
 
-            text_ += " ".join(tokens) + " "
+            text_ += " ".join(tokenss) + " "
 
             if count % 2 == 0 and count != 0:  # end of line
                 text_ += "\n"
@@ -201,8 +126,39 @@ class Corpus:
         with open(file_name, 'w', encoding='utf-8') as f:  # writing the final result to the output file in utf-8
             f.write(text_)
 
-    def change_word(self, word):
-        pass
+    def get_trigrams_number(self, word1, word2, word3):
+        """Returns the number of appearances of the sequence of three received words in order."""
+        trigrams_count = 0
+
+        for sen in self.sentences:
+            for tok_index in range(len(sen - 2)):
+                if word1 == sen.tokens[tok_index].word and word2 == sen.tokens[tok_index + 1].word and \
+                        word3 == sen.tokens[tok_index + 2].word:
+                    trigrams_count += 1
+
+        return trigrams_count
+
+    def get_bigrams_number(self, word1, word2):
+        """Returns the number of appearances of the sequence of two received words in order."""
+        bigrams_count = 0
+
+        for sen in self.sentences:
+            for tok_index in range(len(sen - 1)):
+                if word1 == sen.tokens[tok_index].word and word2 == sen.tokens[tok_index + 1].word:
+                    bigrams_count += 1
+
+        return bigrams_count
+
+
+class Tweet:
+
+    def __init__(self, sentences_=None, category=None):
+        if sentences_ is None:
+            self.sentences = []
+        else:
+            self.sentences = sentences_
+
+        self.category = category
 
 
 if __name__ == "__main__":
@@ -212,13 +168,6 @@ if __name__ == "__main__":
     lyrics_file = argv[3]
     tweets_file = argv[4]
     output_file = argv[5]
-
-    xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
-
-    corpus = Corpus()
-
-    for xml_file in xml_files:
-        corpus.add_xml_file_to_corpus(xml_file)
 
     output_text = "Word Pairs and Distances:\n\n"
 
@@ -276,12 +225,55 @@ if __name__ == "__main__":
 
     # task 2 (Easy Grammy)
     # TODO: finish task 2
-    grammy_corpus = Corpus()
-    grammy_corpus.add_text_file_to_corpus(lyrics_file)
+
+    xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
+
+    main_corpus = Corpus()
+
+    for xml_file in xml_files:
+        main_corpus.add_xml_file_to_corpus(xml_file)
+
+    lyrics_corpus = Corpus()
+    lyrics_corpus.add_text_file_to_corpus(lyrics_file)    # simple tokenization since each line has exactly one sentence
 
     output_text += '=== New Hit ===\n\n'
 
     # task 3 (Tweets mapping)
-
     tweets_corpus = Corpus()
-    tweets_corpus.add_text_file_to_corpus(tweets_file)
+
+    tweets_list = []
+
+    with open(tweets_file, 'r') as f_reader:
+        curr_category_name = None
+        for line in f_reader.readlines():
+            if line[0:] == '==':      # need to find category name
+                temp = line.split()
+                for word in temp:
+                    if '=' not in word:
+                        curr_category_name = word
+
+            else:
+                temp = line.split()
+                tokens = []
+                sentences = []
+                for word in temp:
+                    if word[-1] in '!.':    # end of sentence
+                        sentences.append(Sentence(tokens, 'p', len(tokens)))
+                        tokens = []
+                    else:
+                        tokens.append(Token('w', word, None, None, None))
+
+                if len(tokens) > 0:
+                    sentences.append(Sentence(tokens, 'p', len(tokens)))
+
+                tweets_list.append(Tweet(sentences, curr_category_name))
+
+    # built a list of all tweets in the file after applying tokenization and saved for each tweet for what category
+    # it belongs
+
+    for tweet in tweets_list:
+        tweets_corpus.sentences.extend(tweet.sentences)
+
+    # added the sentences to the tweets corpus
+    # TODO: how to get words vectors ?!
+
