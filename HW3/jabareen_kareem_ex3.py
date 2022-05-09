@@ -91,9 +91,10 @@ class Corpus:
             tokens = []
 
             for word in words:
-                # appending tokens to the tokens list
-                tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
-                tokens.append(tok)
+                if len(word.contents) > 0:
+                    # appending tokens to the tokens list
+                    tok = Token('w', word.contents[0].replace(' ', ''), word.get('c5'), word.get('hw'), word.get('pos'))
+                    tokens.append(tok)
             self.sentences.append(Sentence(tokens, 'head', len(tokens)))  # adding a new sentence each loop
 
         last_chunk = []  # we consider chunks from paragraphs only

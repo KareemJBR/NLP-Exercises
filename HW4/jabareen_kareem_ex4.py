@@ -63,11 +63,13 @@ class Corpus:
             tokens_ = []
 
             for t_word in words:
-                # appending tokens to the tokens list
-                tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
-                            t_word.get('pos'))
+                if len(t_word.contents) > 0:
+                    # appending tokens to the tokens list
+                    tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
+                                t_word.get('pos'))
 
-                tokens_.append(tok)
+                    tokens_.append(tok)
+
             self.sentences.append(Sentence(tokens_, 'head', len(tokens_)))  # adding a new sentence each loop
 
         for sent in p_sent:
@@ -75,10 +77,12 @@ class Corpus:
             tokens_ = []
 
             for t_word in words:
-                tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
-                            t_word.get('pos'))
+                if len(t_word.contents) > 0:
+                    tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
+                                t_word.get('pos'))
 
-                tokens_.append(tok)
+                    tokens_.append(tok)
+
             self.sentences.append(Sentence(tokens_, 'p', len(tokens_)))
 
     def add_text_file_to_corpus(self, file_name: str):
@@ -99,6 +103,7 @@ class Corpus:
             for word_ in words:
                 tok = Token('w', word_.replace(' ', ''), None, None, None)
                 tokens_.append(tok)
+
             self.sentences.append(Sentence(tokens_, 'p', len(tokens_)))
 
     def create_text_file(self, file_name: str):
