@@ -1,7 +1,5 @@
-import numpy as np
 from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
-from gensim.models import Word2Vec, word2vec
 from sys import argv
 from bs4 import BeautifulSoup
 from sklearn.decomposition import PCA
