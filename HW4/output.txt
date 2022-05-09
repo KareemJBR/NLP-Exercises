@@ -1,0 +1,15 @@
+Word Pairs and Distances:
+
+1. bad - terrible : 0.22253096103668213
+2. man - woman : 0.11396622657775879
+3. playing - games : 0.25436222553253174
+4. dancing - love : 0.3206690549850464
+5. fast - slow : 0.12559503316879272
+6. sweet - sugar : 0.3226322531700134
+7. smoke - haze : 0.4513862133026123
+8. food - hungry : 0.4133259654045105
+9. east - west : 0.04572856426239014
+10. door - open : 0.3443470001220703
+
+Analogies:
+

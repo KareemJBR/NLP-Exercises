@@ -1,13 +1,13 @@
+import numpy as np
 from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
-from gensim.models import word2vec
+from gensim.models import Word2Vec, word2vec
 from sys import argv
 from bs4 import BeautifulSoup
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import glob
-import re
-import os
+
 
 # The Corpus class from previous exercises:
 
@@ -168,6 +168,19 @@ class Tweet:
 
 if __name__ == "__main__":
 
+    # # Do the following only once!
+    # # Save the GloVe text file to a word2vec file for your use:
+    # glove2word2vec('glove.6B.50d.txt', 'C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv')
+    # # Load the file as KeyVectors:
+    # pre_trained_model = KeyedVectors.load_word2vec_format\
+    #     ('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv', binary=False)
+    # # Save the key vectors for your use:
+    # pre_trained_model.save('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv')
+    # # Now, when handing the project, the KeyVector filename will be given as an argument.
+    # # You can load it as follwing:
+
+    pre_trained_model = KeyedVectors.load('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv', mmap='r')
+
     kv_file = argv[1]
     xml_dir = argv[2]          # directory containing xml files from the BNC corpus (not a zip file)
     lyrics_file = argv[3]
@@ -177,21 +190,22 @@ if __name__ == "__main__":
     output_text = "Word Pairs and Distances:\n\n"
 
     word_pairs = [
-        ('kissing', 'cuddling'),
-        ('adore', 'love'),
+        ('girl', 'boy'),
+        ('man', 'woman'),
         ('playing', 'games'),
-        ('dancing', 'romancing'),
-        ('smooth', 'newborn'),
-        ('sweet', 'tight'),
+        ('dancing', 'love'),
+        ('fast', 'slow'),
+        ('sweet', 'sugar'),
         ('smoke', 'haze'),
-        ('filetes', 'hungry'),
+        ('food', 'hungry'),
         ('east', 'west'),
         ('door', 'open')
     ]
 
     for index, word_pair in enumerate(word_pairs):
-        curr_distance = 0   # TODO: calculate distance between word_pair[0] and word_pair[1]
-        output_text += str(index + 1)
+        curr_distance = KeyedVectors.distance(pre_trained_model, word_pair[0], word_pair[1])
+
+        output_text += str(index + 1) + '. '
         output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_distance) + "\n"
 
     output_text += '\nAnalogies:\n\n'
@@ -199,34 +213,35 @@ if __name__ == "__main__":
 
     for i in range(half_len):
         output_text += str(i + 1) + '. '
-        output_text += word_pairs[2*i][0] + ' : ' + word_pairs[2*i][1] + ' , '
-        output_text += word_pairs[2*i+1][0] + ' : ' + word_pairs[2*i+1][1] + '\n'
+        output_text += word_pairs[2 * i][0] + ' : ' + word_pairs[2 * i][1] + ' , '
+        output_text += word_pairs[2 * i + 1][0] + ' : ' + word_pairs[2 * i + 1][1] + '\n'
 
     output_text += '\nMost Similar:\n\n'
-    word2vec_model = word2vec.Word2Vec()
-    word2vec_model.load(kv_file)
 
     model_results = []
 
     for i in range(half_len):
         output_text += str(i + 1) + '. '
-        most_similar_word = word2vec_model.most_similar(positive=[word_pairs[2*i][1], word_pairs[2*i+1][0]],
-                                                        negative=[word_pairs[2*i+1][1]])
 
-        model_results.append((word_pairs[2*i][0], most_similar_word))
+        most_similar_word, _ = KeyedVectors.most_similar(pre_trained_model,
+                                                         positive=[word_pairs[2 * i][1], word_pairs[2 * i + 1][0]],
+                                                         negative=[word_pairs[2 * i + 1][1]])[0]
 
-        output_text += word_pairs[2*i][1] + ' + ' + word_pairs[2*i+1][0] + ' - ' + word_pairs[2*i+1][1] + ' = '
-        output_text += most_similar_word + '\n'
+        model_results.append((word_pairs[2 * i][0], most_similar_word))
+
+        output_text += word_pairs[2 * i][1] + ' + ' + word_pairs[2 * i + 1][0] + ' - '
+        output_text += word_pairs[2 * i + 1][1] + ' = ' + most_similar_word + '\n'
 
     output_text += '\nDistances:\n\n'
 
     for i in range(half_len):
-        curr_distance = 0   # TODO: calculate distance between model_results[i][0] and model_results[i][1]
+        curr_distance = KeyedVectors.distance(pre_trained_model, model_results[i][0], model_results[i][1])
+
         output_text += str(i + 1) + '. '
         output_text += model_results[i][0] + ' - ' + model_results[i][1] + ' : '
         output_text += str(curr_distance) + '\n'
 
-    output_text += '\n'     # end of task 1
+    output_text += '\n'  # end of task 1
 
     # task 2 (Easy Grammy)
     # TODO: finish task 2
@@ -239,7 +254,7 @@ if __name__ == "__main__":
         main_corpus.add_xml_file_to_corpus(xml_file)
 
     lyrics_corpus = Corpus()
-    lyrics_corpus.add_text_file_to_corpus(lyrics_file)    # simple tokenization since each line has exactly one sentence
+    lyrics_corpus.add_text_file_to_corpus(lyrics_file)  # simple tokenization since each line has exactly one sentence
 
     output_text += '=== New Hit ===\n\n'
 
@@ -251,7 +266,7 @@ if __name__ == "__main__":
     with open(tweets_file, 'r') as f_reader:
         curr_category_name = None
         for line in f_reader.readlines():
-            if line[0:] == '==':      # need to find category name
+            if line[0:] == '==':  # need to find category name
                 temp = line.split()
                 for word in temp:
                     if '=' not in word:
@@ -262,7 +277,7 @@ if __name__ == "__main__":
                 tokens = []
                 sentences = []
                 for word in temp:
-                    if word[-1] in '!.':    # end of sentence
+                    if word[-1] in '!.':  # end of sentence
                         sentences.append(Sentence(tokens, 'p', len(tokens)))
                         tokens = []
                     else:
@@ -281,4 +296,3 @@ if __name__ == "__main__":
 
     # added the sentences to the tweets corpus
     # TODO: how to get words vectors ?!
-
