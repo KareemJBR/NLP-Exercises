@@ -164,6 +164,45 @@ class Tweet:
         self.category = category
 
 
+def get_new_song(song_corpus, words_to_swap):
+    """
+    Creates a new song by changing a word per line in the song contained in `song_corpus`.
+    :param song_corpus: Corpus having the grammy winner song tokenized.
+    :param words_to_swap: A list of words, each word is from a separate line in the grammy winner song to swap with
+    similar word.
+    :return: Corpus object containing the new song tokenized.
+    :raise ValueError if the length of `words_to_swap` is unequal to the number of sentences in `song_corpus`.
+    """
+
+    if len(song_corpus.sentences) != len(words_to_swap):
+        raise ValueError("The number of words to swap must be equal to the number of sentences in the corpus.")
+
+    new_song_corpus = Corpus()
+
+    
+
+
+def get_corpus_as_text(corpus):
+    """
+    Creates a text based on the parameter `corpus`.
+    :param corpus: Corpus object to create text from.
+    :return: The text generated from the corpus.
+    """
+
+    generated_text = ""
+
+    for corpus_sentence in corpus.sentences:
+        for ind in range(len(corpus_sentence.tokens)):
+            generated_text += corpus_sentence.tokens[ind].word
+
+            if ind == len(corpus_sentence) - 1:
+                generated_text += '\n'
+            else:
+                generated_text += ' '
+
+    return generated_text
+
+
 if __name__ == "__main__":
 
     # # Do the following only once!
@@ -242,7 +281,6 @@ if __name__ == "__main__":
     output_text += '\n'  # end of task 1
 
     # task 2 (Easy Grammy)
-    # TODO: finish task 2
 
     xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
 
@@ -255,6 +293,18 @@ if __name__ == "__main__":
     lyrics_corpus.add_text_file_to_corpus(lyrics_file)  # simple tokenization since each line has exactly one sentence
 
     output_text += '=== New Hit ===\n\n'
+
+    words_to_change = ['baby', 'doing', 'at', 'Oh', 'trap', 'robe', 'alone', 'warm', 'like', 'dancing', 'and',
+                       'mansion', 'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight',
+                       'coming', 'sweet', 'bite', 'Purple', 'filets', 'keep', 'love', 'talking', 'bathtub', 'jump',
+                       'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight', 'coming',
+                       'need', 'gotta', 'tryna', 'ah-ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
+                       'la-la-la-la', 'coming', 'woo-woo-woo-woo', 'woo-woo-woo-woo', 'la-la-la-la', 'coming',
+                       'oh', 'gotta', 'waiting', 'coming', 'waiting', 'adore', 'la-la-la-la']
+
+    my_new_song = get_new_song(lyrics_corpus, words_to_change)
+
+    output_text += get_corpus_as_text(my_new_song) + '\n'
 
     # task 3 (Tweets mapping)
     tweets_corpus = Corpus()
