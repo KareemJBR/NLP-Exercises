@@ -38,15 +38,21 @@ class Corpus:
         :return: None
         """
 
-        with open(file_name, 'r') as f:  # reading file
-            data = f.read()
+        with open(file_name, 'r', encoding='utf-8') as jabber:  # reading file
+            data = jabber.read()
 
         # we shall parse the xml file right now
 
         wtext = BeautifulSoup(data, "xml").find("wtext")
 
-        heads = wtext.find_all('head')
-        ps = wtext.find_all('p')
+        if wtext is None:
+            stext = BeautifulSoup(data, "xml").find("stext")
+            heads = stext.find_all('head')
+            ps = stext.find_all('p')
+
+        else:
+            heads = wtext.find_all('head')
+            ps = wtext.find_all('p')
 
         head_sent = []
         for h in heads:
@@ -58,30 +64,28 @@ class Corpus:
 
         for sent in head_sent:
             words = sent.find_all('w')
-            tokens_ = []
+            tok_s = []
 
             for t_word in words:
+                # appending tokens to the tokens list
                 if len(t_word.contents) > 0:
-                    # appending tokens to the tokens list
                     tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
                                 t_word.get('pos'))
 
-                    tokens_.append(tok)
-
-            self.sentences.append(Sentence(tokens_, 'head', len(tokens_)))  # adding a new sentence each loop
+                    tok_s.append(tok)
+            self.sentences.append(Sentence(tok_s, 'head', len(tok_s)))  # adding a new sentence each loop
 
         for sent in p_sent:
             words = sent.find_all('w')
-            tokens_ = []
+            tok_s = []
 
             for t_word in words:
                 if len(t_word.contents) > 0:
                     tok = Token('w', t_word.contents[0].replace(' ', ''), t_word.get('c5'), t_word.get('hw'),
                                 t_word.get('pos'))
 
-                    tokens_.append(tok)
-
-            self.sentences.append(Sentence(tokens_, 'p', len(tokens_)))
+                    tok_s.append(tok)
+            self.sentences.append(Sentence(tok_s, 'p', len(tok_s)))
 
     def add_text_file_to_corpus(self, file_name: str):
         """
@@ -164,14 +168,16 @@ class Tweet:
         self.category = category
 
 
-def get_new_song(song_corpus, words_to_swap):
+def get_new_song(song_corpus, words_to_swap, xml_corpus):
     """
     Creates a new song by changing a word per line in the song contained in `song_corpus`.
-    :param song_corpus: Corpus having the grammy winner song tokenized.
-    :param words_to_swap: A list of words, each word is from a separate line in the grammy winner song to swap with
-    similar word.
+    :param song_corpus: Corpus having only the grammy winner song tokenized.
+    :param words_to_swap: A list of words, each word is from a separate line in the grammy winner song to swap with a
+    similar word from given corpus.
+    :param xml_corpus: The corpus to search for appearances for similar words in and to add them to the output song.
     :return: Corpus object containing the new song tokenized.
-    :raise ValueError if the length of `words_to_swap` is unequal to the number of sentences in `song_corpus`.
+    :raise ValueError if the length of `words_to_swap` is unequal to the number of sentences in `song_corpus`, or if
+    got at least one word that does not exist in the sentence to change.
     """
 
     if len(song_corpus.sentences) != len(words_to_swap):
@@ -179,7 +185,50 @@ def get_new_song(song_corpus, words_to_swap):
 
     new_song_corpus = Corpus()
 
-    
+    for sentence_index, song_sentence in enumerate(song_corpus.sentences):
+        replaced_at_least_once = False
+        newest_tokens = []
+
+        for song_token in song_sentence.tokens:
+            temp_song_word = song_token.word
+
+            # a token could end\start with more than one punctuation like ending with ?"
+            while len(temp_song_word) > 0:
+                if temp_song_word[-1] in '.,?!")':
+                    temp_song_word = temp_song_word[:len(temp_song_word) - 1]
+                    continue
+                break
+
+            while len(temp_song_word) > 0:
+                if temp_song_word[0] in '.,"(?!':
+                    temp_song_word = temp_song_word[1:]
+                    continue
+                break
+
+            if temp_song_word.lower() == words_to_swap[sentence_index].lower():
+                # TODO: add the code for finding the 10 most similar words then use the main corpus for searching
+                #  trigrams and unigrams
+
+
+                # TODO: remove the following line because it is wrong
+                # next_token = Token('w', words_to_swap[sentence_index] + song_token.word[len(temp_song_word):],
+                #                    None, None, None)
+
+                replaced_at_least_once = True
+            else:
+                next_token = Token('w', song_token.word, None, None, None)
+
+            newest_tokens.append(next_token)
+
+        if not replaced_at_least_once:
+            error_str = f'Word {words_to_swap[sentence_index]} not found. Sentence index = {sentence_index}.'
+            with open('ErrorLog.txt', 'w', encoding='utf-8') as error_f:
+                error_f.write(error_str)
+            raise ValueError("Word not found.")
+
+        new_song_corpus.sentences.append(Sentence(newest_tokens, 'p', len(newest_tokens)))
+
+    return new_song_corpus
 
 
 def get_corpus_as_text(corpus):
@@ -195,7 +244,7 @@ def get_corpus_as_text(corpus):
         for ind in range(len(corpus_sentence.tokens)):
             generated_text += corpus_sentence.tokens[ind].word
 
-            if ind == len(corpus_sentence) - 1:
+            if ind == len(corpus_sentence.tokens) - 1:
                 generated_text += '\n'
             else:
                 generated_text += ' '
@@ -302,9 +351,13 @@ if __name__ == "__main__":
                        'la-la-la-la', 'coming', 'woo-woo-woo-woo', 'woo-woo-woo-woo', 'la-la-la-la', 'coming',
                        'oh', 'gotta', 'waiting', 'coming', 'waiting', 'adore', 'la-la-la-la']
 
-    my_new_song = get_new_song(lyrics_corpus, words_to_change)
+    my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus)
 
     output_text += get_corpus_as_text(my_new_song) + '\n'
+
+    with open('output.txt', 'w', encoding='utf-8') as k:
+        k.write(output_text)
+    exit(0)
 
     # task 3 (Tweets mapping)
     tweets_corpus = Corpus()
