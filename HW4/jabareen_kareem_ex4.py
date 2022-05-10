@@ -118,11 +118,11 @@ class Corpus:
         text_ = ""  # indicates the final result
 
         for sentence in self.sentences:
-            tokenss = []
+            tokens_s = []
             for j_ in range(sentence.size):
-                tokenss.append(sentence.tokens[j_].word)  # unpacking tokens
+                tokens_s.append(sentence.tokens[j_].word)  # unpacking tokens
 
-            text_ += " ".join(tokenss) + " "
+            text_ += " ".join(tokens_s) + " "
 
             if count % 2 == 0 and count != 0:  # end of line
                 text_ += "\n"
@@ -138,7 +138,7 @@ class Corpus:
         trigrams_count = 0
 
         for sen in self.sentences:
-            for tok_index in range(len(sen - 2)):
+            for tok_index in range(len(sen.tokens) - 2):
                 if word1 == sen.tokens[tok_index].word and word2 == sen.tokens[tok_index + 1].word and \
                         word3 == sen.tokens[tok_index + 2].word:
                     trigrams_count += 1
@@ -150,7 +150,7 @@ class Corpus:
         bigrams_count = 0
 
         for sen in self.sentences:
-            for tok_index in range(len(sen - 1)):
+            for tok_index in range(len(sen.tokens) - 1):
                 if word1 == sen.tokens[tok_index].word and word2 == sen.tokens[tok_index + 1].word:
                     bigrams_count += 1
 
@@ -168,13 +168,14 @@ class Tweet:
         self.category = category
 
 
-def get_new_song(song_corpus, words_to_swap, xml_corpus):
+def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
     """
     Creates a new song by changing a word per line in the song contained in `song_corpus`.
     :param song_corpus: Corpus having only the grammy winner song tokenized.
     :param words_to_swap: A list of words, each word is from a separate line in the grammy winner song to swap with a
     similar word from given corpus.
     :param xml_corpus: The corpus to search for appearances for similar words in and to add them to the output song.
+    :param kv_trained_model: Trained KeyedVector for finding similarity between words.
     :return: Corpus object containing the new song tokenized.
     :raise ValueError if the length of `words_to_swap` is unequal to the number of sentences in `song_corpus`, or if
     got at least one word that does not exist in the sentence to change.
@@ -189,7 +190,7 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus):
         replaced_at_least_once = False
         newest_tokens = []
 
-        for song_token in song_sentence.tokens:
+        for token_index, song_token in enumerate(song_sentence.tokens):
             temp_song_word = song_token.word
 
             # a token could end\start with more than one punctuation like ending with ?"
@@ -205,14 +206,79 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus):
                     continue
                 break
 
+            if '-' in temp_song_word:
+                end_index = 1
+                for char_index, char in enumerate(temp_song_word):
+                    if char == '-':
+                        end_index = char_index
+                        break
+
+                temp_song_word = temp_song_word[:end_index]
+
             if temp_song_word.lower() == words_to_swap[sentence_index].lower():
-                # TODO: add the code for finding the 10 most similar words then use the main corpus for searching
-                #  trigrams and unigrams
+                most_similar_10 = KeyedVectors.most_similar(kv_trained_model, positive=[temp_song_word.lower()])
+                trigrams_counters = []
+                bigrams_counters = []
 
+                for similar_word, _ in most_similar_10:
+                    if len(song_sentence.tokens) - 1 > token_index > 0:
+                        # word to change is in the middle of the sentence
+                        trigrams_counters.append(xml_corpus.get_trigrams_number(
+                            song_sentence.tokens[token_index - 1].word, similar_word,
+                            song_sentence.tokens[token_index + 1].word))
 
-                # TODO: remove the following line because it is wrong
-                # next_token = Token('w', words_to_swap[sentence_index] + song_token.word[len(temp_song_word):],
-                #                    None, None, None)
+                    elif token_index == 0:  # word to change is at the beginning of the sentence
+                        trigrams_counters.append(xml_corpus.get_bigrams_number(similar_word,
+                                                                               song_sentence.tokens[1].word))
+
+                    else:  # word to change is the last one of the sentence
+                        trigrams_counters.append(xml_corpus.get_bigrams_number(song_sentence.tokens[-2].word,
+                                                                               similar_word))
+
+                if any(trigrams_counters):  # at least one counter is greater than 0
+                    max_counter, max_similarity, res_word = max(trigrams_counters), 0, None
+
+                    # if several words got an equal and positive value for the counter, we should choose the one most
+                    # similar to the original word
+
+                    for ind, count in enumerate(trigrams_counters):
+                        if count == max_counter and most_similar_10[ind][1] >= max_similarity:
+                            res_word = most_similar_10[ind][0]
+
+                    next_token = Token('w', res_word, None, None, None)
+
+                else:  # all counters are 0, we should check bigrams
+                    for similar_word, _ in most_similar_10:
+                        if len(song_sentence.tokens) - 1 > token_index > 0:
+                            # word to change is in the middle of the sentence
+
+                            temp1 = xml_corpus.get_bigrams_number(song_sentence.tokens[token_index - 1].word,
+                                                                  similar_word)
+
+                            temp2 = xml_corpus.get_bigrams_number(similar_word,
+                                                                  song_sentence.tokens[token_index + 1].word)
+                            bigrams_counters.append(temp1 + temp2)
+
+                        elif token_index == 0:  # word to change is at the beginning of the sentence
+                            bigrams_counters.append(xml_corpus.get_bigrams_number(similar_word,
+                                                                                  song_sentence.tokens[1].word))
+
+                        else:  # word to change is the last one of the sentence
+                            bigrams_counters.append(xml_corpus.get_bigrams_number(song_sentence.tokens[-2].word,
+                                                                                  similar_word))
+
+                    if any(bigrams_counters):
+                        max_counter, max_similarity, res_word = max(bigrams_counters), 0, None
+
+                        for ind, count in enumerate(bigrams_counters):
+                            if count == max_counter and most_similar_10[ind][1] >= max_similarity:
+                                res_word = most_similar_10[ind][0]
+
+                        next_token = Token('w', res_word, None, None, None)
+
+                    else:   # all counters are 0 again, now we should just choose the most similar word
+                        most_similar_10.sort(key=lambda x: x[1],  reverse=True)
+                        next_token = Token('w', most_similar_10[0][0], None, None, None)
 
                 replaced_at_least_once = True
             else:
@@ -268,7 +334,7 @@ if __name__ == "__main__":
     pre_trained_model = KeyedVectors.load('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv', mmap='r')
 
     kv_file = argv[1]
-    xml_dir = argv[2]          # directory containing xml files from the BNC corpus (not a zip file)
+    xml_dir = argv[2]  # directory containing xml files from the BNC corpus (not a zip file)
     lyrics_file = argv[3]
     tweets_file = argv[4]
     output_file = argv[5]
@@ -347,17 +413,13 @@ if __name__ == "__main__":
                        'mansion', 'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight',
                        'coming', 'sweet', 'bite', 'Purple', 'filets', 'keep', 'love', 'talking', 'bathtub', 'jump',
                        'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight', 'coming',
-                       'need', 'gotta', 'tryna', 'ah-ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
-                       'la-la-la-la', 'coming', 'woo-woo-woo-woo', 'woo-woo-woo-woo', 'la-la-la-la', 'coming',
-                       'oh', 'gotta', 'waiting', 'coming', 'waiting', 'adore', 'la-la-la-la']
+                       'need', 'gotta', 'tryna', 'ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
+                       'la', 'coming', 'woo', 'woo', 'la', 'coming', 'oh', 'gotta', 'waiting', 'coming',
+                       'waiting', 'adore', 'la']
 
-    my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus)
+    my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus, pre_trained_model)
 
     output_text += get_corpus_as_text(my_new_song) + '\n'
-
-    with open('output.txt', 'w', encoding='utf-8') as k:
-        k.write(output_text)
-    exit(0)
 
     # task 3 (Tweets mapping)
     tweets_corpus = Corpus()
