@@ -1,3 +1,4 @@
+import numpy as np
 from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
 from sys import argv
@@ -5,6 +6,7 @@ from bs4 import BeautifulSoup
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import glob
+import random
 
 
 # The Corpus class from previous exercises:
@@ -186,7 +188,7 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
 
     new_song_corpus = Corpus()
 
-    for sentence_index, song_sentence in enumerate(song_corpus.sentences):
+    for sen_ind, song_sentence in enumerate(song_corpus.sentences):
         replaced_at_least_once = False
         newest_tokens = []
 
@@ -215,7 +217,7 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
 
                 temp_song_word = temp_song_word[:end_index]
 
-            if temp_song_word.lower() == words_to_swap[sentence_index].lower():
+            if temp_song_word.lower() == words_to_swap[sen_ind].lower():
                 most_similar_10 = KeyedVectors.most_similar(kv_trained_model, positive=[temp_song_word.lower()])
                 trigrams_counters = []
                 bigrams_counters = []
@@ -287,10 +289,11 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
             newest_tokens.append(next_token)
 
         if not replaced_at_least_once:
-            error_str = f'Word {words_to_swap[sentence_index]} not found. Sentence index = {sentence_index}.'
+            error_str = f'Word {words_to_swap[sen_ind]} not found. Sentence index = {sen_ind}.'
             with open('ErrorLog.txt', 'w', encoding='utf-8') as error_f:
                 error_f.write(error_str)
-            raise ValueError("Word not found.")
+
+            raise ValueError("Word not found, open ErrorLog text file for more info!")
 
         new_song_corpus.sentences.append(Sentence(newest_tokens, 'p', len(newest_tokens)))
 
@@ -339,94 +342,94 @@ if __name__ == "__main__":
     tweets_file = argv[4]
     output_file = argv[5]
 
-    output_text = "Word Pairs and Distances:\n\n"
-
-    word_pairs = [
-        ('girl', 'boy'),
-        ('man', 'woman'),
-        ('playing', 'games'),
-        ('dancing', 'love'),
-        ('fast', 'slow'),
-        ('sweet', 'sugar'),
-        ('smoke', 'haze'),
-        ('food', 'hungry'),
-        ('east', 'west'),
-        ('door', 'open')
-    ]
-
-    for index, word_pair in enumerate(word_pairs):
-        curr_distance = KeyedVectors.distance(pre_trained_model, word_pair[0], word_pair[1])
-
-        output_text += str(index + 1) + '. '
-        output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_distance) + "\n"
-
-    output_text += '\nAnalogies:\n\n'
-    half_len = len(word_pairs) // 2
-
-    for i in range(half_len):
-        output_text += str(i + 1) + '. '
-        output_text += word_pairs[2 * i][0] + ' : ' + word_pairs[2 * i][1] + ' , '
-        output_text += word_pairs[2 * i + 1][0] + ' : ' + word_pairs[2 * i + 1][1] + '\n'
-
-    output_text += '\nMost Similar:\n\n'
-
-    model_results = []
-
-    for i in range(half_len):
-        output_text += str(i + 1) + '. '
-
-        most_similar_word, _ = KeyedVectors.most_similar(pre_trained_model,
-                                                         positive=[word_pairs[2 * i][1], word_pairs[2 * i + 1][0]],
-                                                         negative=[word_pairs[2 * i + 1][1]])[0]
-
-        model_results.append((word_pairs[2 * i][0], most_similar_word))
-
-        output_text += word_pairs[2 * i][1] + ' + ' + word_pairs[2 * i + 1][0] + ' - '
-        output_text += word_pairs[2 * i + 1][1] + ' = ' + most_similar_word + '\n'
-
-    output_text += '\nDistances:\n\n'
-
-    for i in range(half_len):
-        curr_distance = KeyedVectors.distance(pre_trained_model, model_results[i][0], model_results[i][1])
-
-        output_text += str(i + 1) + '. '
-        output_text += model_results[i][0] + ' - ' + model_results[i][1] + ' : '
-        output_text += str(curr_distance) + '\n'
-
-    output_text += '\n'  # end of task 1
-
-    # task 2 (Easy Grammy)
-
-    xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
-
-    main_corpus = Corpus()
-
-    for xml_file in xml_files:
-        main_corpus.add_xml_file_to_corpus(xml_file)
-
-    lyrics_corpus = Corpus()
-    lyrics_corpus.add_text_file_to_corpus(lyrics_file)  # simple tokenization since each line has exactly one sentence
-
-    output_text += '=== New Hit ===\n\n'
-
-    words_to_change = ['baby', 'doing', 'at', 'Oh', 'trap', 'robe', 'alone', 'warm', 'like', 'dancing', 'and',
-                       'mansion', 'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight',
-                       'coming', 'sweet', 'bite', 'Purple', 'filets', 'keep', 'love', 'talking', 'bathtub', 'jump',
-                       'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight', 'coming',
-                       'need', 'gotta', 'tryna', 'ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
-                       'la', 'coming', 'woo', 'woo', 'la', 'coming', 'oh', 'gotta', 'waiting', 'coming',
-                       'waiting', 'adore', 'la']
-
-    my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus, pre_trained_model)
-
-    output_text += get_corpus_as_text(my_new_song) + '\n'
+    # output_text = "Word Pairs and Distances:\n\n"
+    #
+    # word_pairs = [
+    #     ('girl', 'boy'),
+    #     ('man', 'woman'),
+    #     ('playing', 'games'),
+    #     ('dancing', 'love'),
+    #     ('fast', 'slow'),
+    #     ('sweet', 'sugar'),
+    #     ('smoke', 'haze'),
+    #     ('food', 'hungry'),
+    #     ('east', 'west'),
+    #     ('door', 'open')
+    # ]
+    #
+    # for index, word_pair in enumerate(word_pairs):
+    #     curr_distance = KeyedVectors.distance(pre_trained_model, word_pair[0], word_pair[1])
+    #
+    #     output_text += str(index + 1) + '. '
+    #     output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_distance) + "\n"
+    #
+    # output_text += '\nAnalogies:\n\n'
+    # half_len = len(word_pairs) // 2
+    #
+    # for i in range(half_len):
+    #     output_text += str(i + 1) + '. '
+    #     output_text += word_pairs[2 * i][0] + ' : ' + word_pairs[2 * i][1] + ' , '
+    #     output_text += word_pairs[2 * i + 1][0] + ' : ' + word_pairs[2 * i + 1][1] + '\n'
+    #
+    # output_text += '\nMost Similar:\n\n'
+    #
+    # model_results = []
+    #
+    # for i in range(half_len):
+    #     output_text += str(i + 1) + '. '
+    #
+    #     most_similar_word, _ = KeyedVectors.most_similar(pre_trained_model,
+    #                                                      positive=[word_pairs[2 * i][1], word_pairs[2 * i + 1][0]],
+    #                                                      negative=[word_pairs[2 * i + 1][1]])[0]
+    #
+    #     model_results.append((word_pairs[2 * i][0], most_similar_word))
+    #
+    #     output_text += word_pairs[2 * i][1] + ' + ' + word_pairs[2 * i + 1][0] + ' - '
+    #     output_text += word_pairs[2 * i + 1][1] + ' = ' + most_similar_word + '\n'
+    #
+    # output_text += '\nDistances:\n\n'
+    #
+    # for i in range(half_len):
+    #     curr_distance = KeyedVectors.distance(pre_trained_model, model_results[i][0], model_results[i][1])
+    #
+    #     output_text += str(i + 1) + '. '
+    #     output_text += model_results[i][0] + ' - ' + model_results[i][1] + ' : '
+    #     output_text += str(curr_distance) + '\n'
+    #
+    # output_text += '\n'  # end of task 1
+    #
+    # # task 2 (Easy Grammy)
+    #
+    # xml_files = glob.glob(xml_dir + "/*.xml")  # a list of xml files' names
+    #
+    # main_corpus = Corpus()
+    #
+    # for xml_file in xml_files:
+    #     main_corpus.add_xml_file_to_corpus(xml_file)
+    #
+    # lyrics_corpus = Corpus()
+    # lyrics_corpus.add_text_file_to_corpus(lyrics_file)  # simple tokenization since each line has exactly one sentence
+    #
+    # output_text += '=== New Hit ===\n\n'
+    #
+    # words_to_change = ['baby', 'doing', 'at', 'Oh', 'trap', 'robe', 'alone', 'warm', 'like', 'dancing', 'and',
+    #                    'mansion', 'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight',
+    #                    'coming', 'sweet', 'bite', 'Purple', 'filets', 'keep', 'love', 'talking', 'bathtub', 'jump',
+    #                    'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight', 'coming',
+    #                    'need', 'gotta', 'tryna', 'ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
+    #                    'la', 'coming', 'woo', 'woo', 'la', 'coming', 'oh', 'gotta', 'waiting', 'coming',
+    #                    'waiting', 'adore', 'la']
+    #
+    # my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus, pre_trained_model)
+    #
+    # output_text += get_corpus_as_text(my_new_song) + '\n'
 
     # task 3 (Tweets mapping)
     tweets_corpus = Corpus()
 
     tweets_list = []
 
-    with open(tweets_file, 'r') as f_reader:
+    with open(tweets_file, 'r', encoding='utf-8') as f_reader:
         curr_category_name = None
         for line in f_reader.readlines():
             if line[0:] == '==':  # need to find category name
@@ -457,5 +460,72 @@ if __name__ == "__main__":
     for tweet in tweets_list:
         tweets_corpus.sentences.extend(tweet.sentences)
 
+    arithmetic_tweets_vectors = []
+    random_tweets_vectors = []
+    custom_tweets_vectors = []
+
     # added the sentences to the tweets corpus
-    # TODO: how to get words vectors ?!
+
+    for sentence_index, tweet_sentence in enumerate(tweets_corpus.sentences):
+        words_vectors = []
+
+        for tweet_token in tweet_sentence.tokens:
+            temp_word = tweet_token.word
+
+            while len(temp_word) > 0:
+                if not temp_word[-1].isalpha():
+                    temp_word = temp_word[:len(temp_word) - 1]
+                    continue
+                break
+
+            while len(temp_word) > 0:
+                if not temp_word[0].isalpha():
+                    temp_word = temp_word[1:]
+                    continue
+                break
+
+            words_vectors.append(KeyedVectors.get_vector(pre_trained_model, temp_word))
+
+        arithmetic_tweets_vectors.append(sum(words_vectors) / len(words_vectors))
+
+        temp_sum = None
+
+        for i in range(len(words_vectors)):
+            random_weight = random.uniform(0, 10)
+
+            while random_weight == 0 or random_weight == 10:
+                random_weight = random.uniform(0, 10)
+            if i == 0:
+                temp_sum = words_vectors[sentence_index][i] * random_weight
+            else:
+                temp_sum += words_vectors[sentence_index][i] * random_weight
+
+        temp_sum /= len(words_vectors)
+        random_tweets_vectors.append(temp_sum)
+
+        # TODO: add custom
+
+    arithmetic_tweets_vectors = np.array(arithmetic_tweets_vectors)
+    random_tweets_vectors = np.array(random_tweets_vectors)
+    custom_tweets_vectors = np.array(custom_tweets_vectors)
+
+    pca = PCA()
+    pca.fit(arithmetic_tweets_vectors)
+    arithmetic_results = pca.fit_transform(arithmetic_tweets_vectors)
+
+    plt.scatter(arithmetic_results[:, 1], arithmetic_results[:, 2])
+    plt.show()
+
+    pca = PCA()
+    pca.fit(random_tweets_vectors)
+    random_results = pca.fit_transform(random_tweets_vectors)
+
+    plt.scatter(random_results[:, 1], random_results[:, 2])
+    plt.show()
+
+    # pca = PCA()
+    # pca.fit(custom_tweets_vectors)
+    # custom_results = pca.fit_transform(custom_tweets_vectors)
+    #
+    # plt.scatter(custom_results[:, 1], custom_results[:, 2])
+    # plt.show()
