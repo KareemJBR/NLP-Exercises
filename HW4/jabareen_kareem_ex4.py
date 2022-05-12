@@ -485,14 +485,14 @@ if __name__ == "__main__":
                   'you', 'your', 'we', 'he', 'she', 'them', 'off', 'and', 'but']
 
     strong_words = ['covid', 'vaccine', 'vaccinate', 'vaccinated', 'covid-19', 'virus', 'coronavirus', 'corona',
-                    'lockdown', 'mask', 'death', 'sport', 'sports', 'football', 'basketball', 'baseball', 'player',
-                    'team', 'players', 'teams', 'final', 'match', 'lose', 'win', 'loser', 'losers', 'winner', 'winners',
-                    'champion', 'champions', 'championship', 'league', 'cup', 'tennis', 'olympic', 'olympics',
-                    'skiing', 'archery', 'swimming', 'athlete', 'athletes', 'handball', 'golf', 'boxing', 'racing',
-                    'race', 'diving', 'professional', 'pro', 'professionals', 'cat', 'dog', 'pet', 'horse', 'chicken',
-                    'food', 'bark', 'barking']      # relative words
+                    'lockdown', 'mask', 'distancing', 'death', 'sport', 'sports', 'football', 'basketball', 'baseball',
+                    'player', 'team', 'players', 'teams', 'final', 'match', 'lose', 'win', 'loser', 'losers', 'winner',
+                    'winners', 'champion', 'champions', 'championship', 'league', 'cup', 'tennis', 'olympic',
+                    'olympics', 'skiing', 'archery', 'swimming', 'athlete', 'athletes', 'handball', 'golf', 'boxing',
+                    'racing', 'race', 'diving', 'professional', 'pro', 'professionals', 'cat', 'dog', 'pet', 'horse',
+                    'chicken', 'food', 'bark', 'barking']      # relative words
 
-    weak_words_weight = 1
+    weak_words_weight = 0.5
     strong_words_weight = 10
 
     tweets_data = []
@@ -541,7 +541,7 @@ if __name__ == "__main__":
                 elif tweets_list[tweet_index].tokens[t_index].word in strong_words:     # the biggest impact
                     custom_sum += words_vector[t_index][feature_index] * strong_words_weight
                 else:
-                    custom_sum += words_vector[t_index][feature_index] * random.uniform(3, 7)   # fair impact
+                    custom_sum += words_vector[t_index][feature_index] * random.uniform(1, 9)   # fair impact
 
             # divide by the number of words in tweet
             curr_arithmetic_vector.append(arithmetic_sum / len(words_vector))
@@ -562,7 +562,8 @@ if __name__ == "__main__":
     plt.scatter(arithmetic_results[:, 1], arithmetic_results[:, 2])
     plt.title('Arithmetic Weights - Kareem Jabareen')
     for tweet_ind, tweet_ in enumerate(tweets_list):        # adding annotations to the points
-        plt.annotate(tweet_.category, xy=(arithmetic_results[:, 1][tweet_ind], arithmetic_results[:, 2][tweet_ind]))
+        plt.annotate(tweet_.category + str(tweet_ind), xy=(arithmetic_results[:, 1][tweet_ind],
+                                                           arithmetic_results[:, 2][tweet_ind]))
     plt.show()
 
     pca = PCA()     # dimension reduction
@@ -573,7 +574,8 @@ if __name__ == "__main__":
     plt.title('Random Weights - Kareem Jabareen')
 
     for tweet_ind, tweet_ in enumerate(tweets_list):        # annotations
-        plt.annotate(tweet_.category, xy=(random_results[:, 1][tweet_ind], random_results[:, 2][tweet_ind]))
+        plt.annotate(tweet_.category + str(tweet_ind), xy=(random_results[:, 1][tweet_ind],
+                                                           random_results[:, 2][tweet_ind]))
 
     plt.show()
 
@@ -584,7 +586,8 @@ if __name__ == "__main__":
     plt.scatter(custom_results[:, 1], custom_results[:, 2])
     plt.title('Custom Weights - Kareem Jabareen')
     for tweet_ind, tweet_ in enumerate(tweets_list):        # annotations
-        plt.annotate(tweet_.category, xy=(custom_results[:, 1][tweet_ind], custom_results[:, 2][tweet_ind]))
+        plt.annotate(tweet_.category + str(tweet_ind), xy=(custom_results[:, 1][tweet_ind],
+                                                           custom_results[:, 2][tweet_ind]))
     plt.show()
 
     with open(output_file, 'w', encoding='utf-8') as f_writer:      # writing output file in UTF-8
