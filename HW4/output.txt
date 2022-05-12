@@ -1,15 +1,15 @@
 Word Pairs and Distances:
 
-1. girl - boy : 0.06728005409240723
-2. man - woman : 0.11396622657775879
-3. playing - games : 0.25436222553253174
-4. dancing - love : 0.3206690549850464
-5. fast - slow : 0.12559503316879272
-6. sweet - sugar : 0.3226322531700134
-7. smoke - haze : 0.4513862133026123
-8. food - hungry : 0.4133259654045105
-9. east - west : 0.04572856426239014
-10. door - open : 0.3443470001220703
+1. girl - boy : 0.93271995
+2. man - woman : 0.8860338
+3. playing - games : 0.7456378
+4. dancing - love : 0.67933095
+5. fast - slow : 0.87440497
+6. sweet - sugar : 0.67736775
+7. smoke - haze : 0.5486138
+8. food - hungry : 0.58667403
+9. east - west : 0.95427144
+10. door - open : 0.655653
 
 Analogies:
 
@@ -29,39 +29,39 @@ Most Similar:
 
 Distances:
 
-1. girl - kid : 0.2496960163116455
-2. playing - competitions : 0.3620803952217102
-3. fast - pretty : 0.32082587480545044
-4. smoke - smog : 0.3589963912963867
-5. east - along : 0.20006918907165527
+1. girl - kid : 0.750304
+2. playing - competitions : 0.6379196
+3. fast - pretty : 0.6791741
+4. smoke - smog : 0.6410036
+5. east - along : 0.7999308
 
 === New Hit ===
 
-Said mother said mother said babies
-What you 're (What you 're
-Where you in (Where you in
-uh you got plans? (You got plans?)
-Don't say that (shut your traps
-I'm sipping wine (sip, sip) in a scarf (drip, drip)
-I look too good (look too good) to be much (woo-woo)
-My house clean (house clean), my pool cool (pool cool
+Said babies, said babies, said babies
+What you 're? (What you 're?)
+Where you in? (Where you in?)
+uh, you got plans? (You got plans?)
+Don't say that (shut your traps)
+I'm sipping wine (sip, sip) in a robes (drip, drip)
+I look too good (look too good) to be just (woo-woo)
+My house clean (house clean), my pool cool (pool cool)
 Just shaved (smooth even a newborn)
-We should be danced romancing
+We should be singing, romancing
 In the east wing with the west wing
-Of this hotel what's happening?
+Of this palatial, what's happening?
 I ain't playing no game
 Every word that I say is still straight from the heart
-So if you tryna hand in these arms
+So if you tryna body in these arms
 I'ma take the door open
 (I'ma take the door open)
 I'ma take the door open, girl
 (I'ma take the door open, hoping)
 That you feel the but I feel
-And you want me like I want you 'll baby
+And you want me like I want you 'll, baby
 (Tell me that you're come through)
-Ooh, you're so taste (so fruit so tight (so tight)
+Ooh, you're so taste (so fruit), so tight (so tight)
 I won't bites (ah-ah), unless you like (unless you like)
-If you smoke (what you smoke?) I got the haze pink Haze)
+If you smoke (what you smoke?) I got the haze (pink Haze)
 And if you're hungry, girl, I got fillets (woo-woo)
 Ooh, baby, don't put me (waiting)
 There's so much life we could be making (shamone)
@@ -70,35 +70,35 @@ Rose petals in the bathroom
 Girl, let's jumps in, it's bubbling
 I ain't playing no game
 Every word that I say is still straight from the heart
-So (if you) if you (tryna) tryna hand in these arms
+So (if you) if you (tryna) tryna body in these arms
 I'ma take the door open
 (I'ma take the door open)
 I'ma take the door open, girl
 (I'ma take the door open, hoping)
 That you feel the but I feel
-And you want me like I want you 'll baby
+And you want me like I want you 'll, baby
 (Tell me that you're come through) come on, girl
 La-la-la, la-la-la-la (I needs you, baby)
 La-la-la, la-la-la-la (I gonna see you, baby)
 La-la-la, la-la-la-la (girl, I'm deliu give you this)
-nee nee
+nee, nee
 Hey-hey, I'ma take my door open, baby (I'ma take the door open)
-I'ma stay I'ma take my door open, girl
-(I'ma leave the door open, move and I'm hope hope
+I'ma stay, I'ma take my door open, girl
+(I'ma leave the door open, take) and I'm hope, hope
 That you feel the but I feel
 And you know me like I know you tonight, baby
 (Tell me that you're come through) woo!
-de de (tell me)
+de, de (tell me)
 (Tell me that you're come through)
-whahng whahng whahng
-whahng whahng whahng
-de de de de
+whahng, whahng, whahng
+whahng, whahng, whahng
+de, de (de, de)
 (Tell me that you're come through)
-Girl, I'm here just waiting for you uh
+Girl, I'm here just waiting for you (uh!)
 Come on over, I'll adore you (I gonna know!)
-La-la-la, la-la-la-la (I'm wait wait wait
+La-la-la, la-la-la-la (I'm wait, wait, wait)
 (Tell me that you're come through) for you
 Girl, I'm here just wait for you
 Come on over, I'll rejoice you
-de de de de
+de, de (de, de)
 

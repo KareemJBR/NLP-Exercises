@@ -194,16 +194,21 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
 
         for token_index, song_token in enumerate(song_sentence.tokens):
             temp_song_word = song_token.word
+            start_punctuations, end_punctuations = '', ''
 
             # a token could end\start with more than one punctuation like ending with ?"
             while len(temp_song_word) > 0:
                 if temp_song_word[-1] in '.,?!")':
+                    end_punctuations += temp_song_word[-1]
                     temp_song_word = temp_song_word[:len(temp_song_word) - 1]
                     continue
                 break
 
+            end_punctuations = end_punctuations[::-1]
+
             while len(temp_song_word) > 0:
                 if temp_song_word[0] in '.,"(?!':
+                    start_punctuations += temp_song_word[0]
                     temp_song_word = temp_song_word[1:]
                     continue
                 break
@@ -247,7 +252,7 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
                         if count == max_counter and most_similar_10[ind][1] >= max_similarity:
                             res_word = most_similar_10[ind][0]
 
-                    next_token = Token('w', res_word, None, None, None)
+                    next_token = Token('w', start_punctuations + res_word + end_punctuations, None, None, None)
 
                 else:  # all counters are 0, we should check bigrams
                     for similar_word, _ in most_similar_10:
@@ -276,11 +281,12 @@ def get_new_song(song_corpus, words_to_swap, xml_corpus, kv_trained_model):
                             if count == max_counter and most_similar_10[ind][1] >= max_similarity:
                                 res_word = most_similar_10[ind][0]
 
-                        next_token = Token('w', res_word, None, None, None)
+                        next_token = Token('w', start_punctuations + res_word + end_punctuations, None, None, None)
 
                     else:  # all counters are 0 again, now we should just choose the most similar word
                         most_similar_10.sort(key=lambda x: x[1], reverse=True)
-                        next_token = Token('w', most_similar_10[0][0], None, None, None)
+                        next_token = Token('w', start_punctuations + most_similar_10[0][0] + end_punctuations, None,
+                                           None, None)
 
                 replaced_at_least_once = True
             else:
@@ -321,17 +327,6 @@ def get_corpus_as_text(corpus):
     return generated_text
 
 
-def check_strong_word(word_string):
-    """Returns True if the word has a meaning, and it is a key word in the sentence. Otherwise, it returns False."""
-    if word_string.endswith('ing') or word_string.endswith('tion') or word_string.endswith('ful') or \
-            word_string.endswith('less') or word_string.endswith('ive') or word_string.endswith('s') or \
-            word_string.endswith('sion') or word_string.endswith('able') or word_string.endswith('ability') or \
-            word_string.endswith('ist') or word_string.endswith('er'):
-        return True
-
-    return False
-
-
 if __name__ == "__main__":
 
     # # Do the following only once!
@@ -355,7 +350,7 @@ if __name__ == "__main__":
 
     output_text = "Word Pairs and Distances:\n\n"
 
-    word_pairs = [
+    word_pairs = [      # words to use for calculating distance and building analogies
         ('girl', 'boy'),
         ('man', 'woman'),
         ('playing', 'games'),
@@ -369,10 +364,10 @@ if __name__ == "__main__":
     ]
 
     for index, word_pair in enumerate(word_pairs):
-        curr_distance = KeyedVectors.distance(pre_trained_model, word_pair[0], word_pair[1])
+        curr_sim = KeyedVectors.similarity(pre_trained_model, word_pair[0], word_pair[1])
 
         output_text += str(index + 1) + '. '
-        output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_distance) + "\n"
+        output_text += word_pair[0] + " - " + word_pair[1] + " : " + str(curr_sim) + "\n"
 
     output_text += '\nAnalogies:\n\n'
     half_len = len(word_pairs) // 2
@@ -401,11 +396,11 @@ if __name__ == "__main__":
     output_text += '\nDistances:\n\n'
 
     for i in range(half_len):
-        curr_distance = KeyedVectors.distance(pre_trained_model, model_results[i][0], model_results[i][1])
+        curr_sim = KeyedVectors.similarity(pre_trained_model, model_results[i][0], model_results[i][1])
 
         output_text += str(i + 1) + '. '
         output_text += model_results[i][0] + ' - ' + model_results[i][1] + ' : '
-        output_text += str(curr_distance) + '\n'
+        output_text += str(curr_sim) + '\n'
 
     output_text += '\n'  # end of task 1
 
@@ -429,7 +424,7 @@ if __name__ == "__main__":
                        'games', 'coming', 'lay', 'leave', 'leave', 'leave', 'leave', 'way', 'tonight', 'coming',
                        'need', 'gotta', 'tryna', 'ah', 'leave', 'leave', 'hoping', 'way', 'want', 'coming',
                        'la', 'coming', 'woo', 'woo', 'la', 'coming', 'oh', 'gotta', 'waiting', 'coming',
-                       'waiting', 'adore', 'la']
+                       'waiting', 'adore', 'la']    # words we will change in the song
 
     my_new_song = get_new_song(lyrics_corpus, words_to_change, main_corpus, pre_trained_model)
 
@@ -489,7 +484,15 @@ if __name__ == "__main__":
     weak_words = ['in', 'on', 'at', 'the', 'of', 'his', 'her', 'their', 'there', 'my', 'our', 'i', 'me', 'ours', 'hers',
                   'you', 'your', 'we', 'he', 'she', 'them', 'off', 'and', 'but']
 
-    weak_words_weight = 0.1
+    strong_words = ['covid', 'vaccine', 'vaccinate', 'vaccinated', 'covid-19', 'virus', 'coronavirus', 'corona',
+                    'lockdown', 'mask', 'death', 'sport', 'sports', 'football', 'basketball', 'baseball', 'player',
+                    'team', 'players', 'teams', 'final', 'match', 'lose', 'win', 'loser', 'losers', 'winner', 'winners',
+                    'champion', 'champions', 'championship', 'league', 'cup', 'tennis', 'olympic', 'olympics',
+                    'skiing', 'archery', 'swimming', 'athlete', 'athletes', 'handball', 'golf', 'boxing', 'racing',
+                    'race', 'diving', 'professional', 'pro', 'professionals', 'cat', 'dog', 'pet', 'horse', 'chicken',
+                    'food', 'bark', 'barking']      # relative words
+
+    weak_words_weight = 1
     strong_words_weight = 10
 
     tweets_data = []
@@ -533,49 +536,56 @@ if __name__ == "__main__":
 
                 random_sum += words_vector[t_index][feature_index] * random_weight
 
-                if tweets_list[tweet_index].tokens[t_index].word in weak_words:
+                if tweets_list[tweet_index].tokens[t_index].word in weak_words:     # small impact on calculations
                     custom_sum += words_vector[t_index][feature_index] * weak_words_weight
-                elif check_strong_word(tweets_list[tweet_index].tokens[t_index].word):
-                    custom_sum += words_vector[t_index][feature_index] * random.uniform(1, 10)
+                elif tweets_list[tweet_index].tokens[t_index].word in strong_words:     # the biggest impact
+                    custom_sum += words_vector[t_index][feature_index] * strong_words_weight
                 else:
-                    custom_sum += words_vector[t_index][feature_index] * random.uniform(3, 7)
+                    custom_sum += words_vector[t_index][feature_index] * random.uniform(3, 7)   # fair impact
 
+            # divide by the number of words in tweet
             curr_arithmetic_vector.append(arithmetic_sum / len(words_vector))
             curr_random_vector.append(random_sum / len(words_vector))
             curr_custom_vector.append(custom_sum / len(words_vector))
 
+        # convert them to numpy arrays
         arithmetic_tweets_vectors.append(np.array(curr_arithmetic_vector))
         random_tweets_vectors.append(np.array(curr_random_vector))
         custom_tweets_vectors.append(np.array(curr_custom_vector))
 
-    pca = PCA()
+    # now we plot the results using matplotlib.pyplot
+
+    pca = PCA()     # dimension reduction
     pca.fit(arithmetic_tweets_vectors)
     arithmetic_results = pca.fit_transform(arithmetic_tweets_vectors)
 
     plt.scatter(arithmetic_results[:, 1], arithmetic_results[:, 2])
     plt.title('Arithmetic Weights - Kareem Jabareen')
-    for tweet_ind, tweet_ in enumerate(tweets_list):
+    for tweet_ind, tweet_ in enumerate(tweets_list):        # adding annotations to the points
         plt.annotate(tweet_.category, xy=(arithmetic_results[:, 1][tweet_ind], arithmetic_results[:, 2][tweet_ind]))
     plt.show()
 
-    pca = PCA()
+    pca = PCA()     # dimension reduction
     pca.fit(random_tweets_vectors)
     random_results = pca.fit_transform(random_tweets_vectors)
 
     plt.scatter(random_results[:, 1], random_results[:, 2])
     plt.title('Random Weights - Kareem Jabareen')
 
-    for tweet_ind, tweet_ in enumerate(tweets_list):
+    for tweet_ind, tweet_ in enumerate(tweets_list):        # annotations
         plt.annotate(tweet_.category, xy=(random_results[:, 1][tweet_ind], random_results[:, 2][tweet_ind]))
 
     plt.show()
 
-    pca = PCA()
+    pca = PCA()     # dimension reduction
     pca.fit(custom_tweets_vectors)
     custom_results = pca.fit_transform(custom_tweets_vectors)
 
     plt.scatter(custom_results[:, 1], custom_results[:, 2])
     plt.title('Custom Weights - Kareem Jabareen')
-    for tweet_ind, tweet_ in enumerate(tweets_list):
+    for tweet_ind, tweet_ in enumerate(tweets_list):        # annotations
         plt.annotate(tweet_.category, xy=(custom_results[:, 1][tweet_ind], custom_results[:, 2][tweet_ind]))
     plt.show()
+
+    with open(output_file, 'w', encoding='utf-8') as f_writer:      # writing output file in UTF-8
+        f_writer.write(output_text)
