@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from gensim.scripts.glove2word2vec import glove2word2vec
 from gensim.models import KeyedVectors
@@ -329,24 +330,23 @@ def get_corpus_as_text(corpus):
 
 if __name__ == "__main__":
 
-    # # Do the following only once!
-    # # Save the GloVe text file to a word2vec file for your use:
-    # glove2word2vec('glove.6B.50d.txt', 'C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv')
-    # # Load the file as KeyVectors:
-    # pre_trained_model = KeyedVectors.load_word2vec_format\
-    #     ('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv', binary=False)
-    # # Save the key vectors for your use:
-    # pre_trained_model.save('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv')
-    # # Now, when handing the project, the KeyVector filename will be given as an argument.
-    # # You can load it as follwing:
-
-    pre_trained_model = KeyedVectors.load('C:\\Users\\Karee\\Documents\\NLP-Exercises\\HW4\\kv_file.kv', mmap='r')
-
     kv_file = argv[1]
     xml_dir = argv[2]  # directory containing xml files from the BNC corpus (not a zip file)
     lyrics_file = argv[3]
     tweets_file = argv[4]
     output_file = argv[5]
+
+    # # Do the following only once!
+    # # Save the GloVe text file to a word2vec file for your use:
+    # glove2word2vec('glove.6B.50d.txt', os.getcwd() + '\\' + kv_file)
+    # # Load the file as KeyVectors:
+    # pre_trained_model = KeyedVectors.load_word2vec_format(os.getcwd() + '\\' + kv_file, binary=False)
+    # # Save the key vectors for your use:
+    # pre_trained_model.save(os.getcwd() + '\\' + kv_file)
+    # # Now, when handing the project, the KeyVector filename will be given as an argument.
+    # # You can load it as follwing:
+
+    pre_trained_model = KeyedVectors.load(os.getcwd() + '\\' + kv_file, mmap='r')
 
     output_text = "Word Pairs and Distances:\n\n"
 
