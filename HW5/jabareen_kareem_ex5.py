@@ -1,4 +1,5 @@
 from sys import argv
+import numpy as np
 
 
 class Rule:
@@ -18,6 +19,12 @@ class Parser:
     def get_tree(self, sen):
         """Returns the parser tree with the highest probability for the received sentence as an argument, and the log of
          the probability."""
+        sen_list = sen.split()
+
+        probs_chart = np.zeros(shape=(len(sen_list), len(sen_list)))
+        rules_indices_chart = np.zeros(shape=probs_chart.shape)
+        sequences_chart = []
+
         pass
 
 
